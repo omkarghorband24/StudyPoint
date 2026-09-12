@@ -843,12 +843,12 @@
 
             const generalStudents =
                 students
-                    .filter(s => s.section === "General")
+                    .filter(s => s.section === "General" && s.status === "active")
                     .sort((a, b) => a.setNumber - b.setNumber);
 
             const vipStudents =
                 students
-                    .filter(s => s.section === "VIP")
+                    .filter(s => s.section === "VIP" && s.status === "active")
                     .sort((a, b) => a.setNumber - b.setNumber);
 
 
