@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Study Point Management</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <!-- ================= HEADER ================= -->
+
+    <header class="top-header">
+
+        <div class="header-left">
+
+            <button class="menu-btn" onclick="toggleSidebar()">
+                ☰
+            </button>
+
+            <div class="logo">
+                JIJAU <span>ABHYASIKA</span>
+            </div>
+
+        </div>
+
+        <div class="admin-profile">
+            <div class="admin-text">
+                <strong>Administrator</strong>
+                <small>Study Point</small>
+            </div>
+
+            <div class="admin-avatar">
+                A
+            </div>
+        </div>
+
+    </header>
+
+
+    <!-- ================= SIDEBAR ================= -->
+
+    <aside class="sidebar" id="sidebar">
+
+        <div class="sidebar-title">
+            MAIN MENU
+        </div>
+
+        <a href="#" class="nav-item active" onclick="showPage('dashboard', this); return false;">
+            <span>▦</span>
+            Dashboard
+        </a>
+
+        <a href="#" class="nav-item" onclick="showPage('students', this); return false;">
+            <span>👨‍🎓</span>
+            Students
+        </a>
+
+        <a href="#" class="nav-item" onclick="showPage('reports', this); return false;">
+            <span>📊</span>
+            Reports
+        </a>
+
+        <div class="sidebar-title system-title">
+            SYSTEM
+        </div>
+
+        <a href="#" class="nav-item">
+            <span>⚙️</span>
+            Settings
+        </a>
+
+        <a href="#" class="nav-item">
+            <span>💾</span>
+            Backup
+        </a>
+
+    </aside>
+
+
+    <!-- ================= MAIN CONTENT ================= -->
+
+    <main class="main-content">
+
+        <!-- Page Heading -->
+
+        <div class="page-heading">
+
+            <div>
+                <h1 id="pageTitle">Dashboard</h1>
+                <p id="pageSubtitle">Study Point Management System</p>
+            </div>
+
+            <button class="add-student-btn"
+                    onclick="openStudentModal()">
+                + Add New Student
+            </button>
+
+        </div>
+
+
+        <!-- ================= DASHBOARD PAGE ================= -->
+
+        <div id="dashboardPage">
+
+        <!-- ================= STAT CARDS ================= -->
+
+        <section class="stats-grid">
+
+            <div class="stat-card">
+
+                <div class="stat-info">
+                    <p>Total Sets</p>
+                    <h2 id="totalSets">163</h2>
+                    <span>General + VIP</span>
+                </div>
+
+                <div class="stat-icon">
+                    💺
+                </div>
+
+            </div>
+
+
+            <div class="stat-card occupied-card">
+
+                <div class="stat-info">
+                    <p>Occupied Sets</p>
+                    <h2 id="occupiedSets">0</h2>
+                    <span>Currently occupied</span>
+                </div>
+
+                <div class="stat-icon">
+                    👤
+                </div>
+
+            </div>
+
+
+            <div class="stat-card available-card">
+
+                <div class="stat-info">
+                    <p>Available Sets</p>
+                    <h2 id="availableSets">163</h2>
+                    <span>Currently available</span>
+                </div>
+
+                <div class="stat-icon">
+                    ✓
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-info">
+                    <p>Total Students</p>
+                    <h2 id="totalStudents">0</h2>
+                    <span>Active students</span>
+                </div>
+
+                <div class="stat-icon">
+                    👨‍🎓
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= SEARCH ================= -->
+
+        <section class="search-section">
+
+            <div class="search-box">
+
+                <span>🔍</span>
+
+                <input
+                    type="text"
+                    id="setSearch"
+                    placeholder="Search Set Number..."
+                    oninput="searchSets()"
+                >
+
+            </div>
+
+            <div class="filter-buttons">
+
+                <button class="filter-btn active"
+                        onclick="filterSets('all', this)">
+                    All
+                </button>
+
+                <button class="filter-btn"
+                        onclick="filterSets('available', this)">
+                    Available
+                </button>
+
+                <button class="filter-btn"
+                        onclick="filterSets('occupied', this)">
+                    Occupied
+                </button>
+
+                <button class="filter-btn"
+                        onclick="filterSets('expired', this)">
+                    Expired
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= GENERAL SECTION ================= -->
+
+        <section class="section-card">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>General Section</h2>
+
+                    <p>
+                        General Study Sets
+                    </p>
+
+                </div>
+
+                <div class="section-summary">
+
+                    <span class="section-total">
+                        106 Sets
+                    </span>
+
+                    <span id="generalAvailable">
+                        106 Available
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="sets-container">
+
+                <div class="sets-grid"
+                     id="generalSets">
+
+                    <!-- General sets generated by JavaScript -->
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= VIP SECTION ================= -->
+
+        <section class="section-card">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>VIP Section</h2>
+
+                    <p>
+                        Premium VIP Study Sets
+                    </p>
+
+                </div>
+
+                <div class="section-summary">
+
+                    <span class="section-total vip">
+                        57 Sets
+                    </span>
+
+                    <span id="vipAvailable">
+                        57 Available
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="sets-container">
+
+                <div class="sets-grid"
+                     id="vipSets">
+
+                    <!-- VIP sets generated by JavaScript -->
+
+                </div>
+
+            </div>
+
+        </section>
+
+        </div>
+
+
+        <!-- ================= STUDENTS LIST PAGE ================= -->
+
+        <div id="studentsPage" style="display: none;">
+
+            <section class="section-card">
+
+                <div class="section-header">
+
+                    <div>
+                        <h2>General Section</h2>
+                        <p>All students in General sets</p>
+                    </div>
+
+                    <div class="section-summary">
+                        <span class="section-total" id="generalStudentsCount">
+                            0 Students
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="students-list" id="generalStudentsList">
+                    <!-- General students rendered by JavaScript -->
+                </div>
+
+            </section>
+
+            <section class="section-card">
+
+                <div class="section-header">
+
+                    <div>
+                        <h2>VIP Section</h2>
+                        <p>All students in VIP sets</p>
+                    </div>
+
+                    <div class="section-summary">
+                        <span class="section-total vip" id="vipStudentsCount">
+                            0 Students
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="students-list" id="vipStudentsList">
+                    <!-- VIP students rendered by JavaScript -->
+                </div>
+
+            </section>
+
+        </div>
+
+
+        <!-- ================= REPORTS PAGE ================= -->
+
+        <div id="reportsPage" style="display: none;">
+
+            <section class="section-card">
+
+                <div class="section-header">
+
+                    <div>
+                        <h2>Export Report</h2>
+                        <p>Download student data as an Excel sheet for a date range</p>
+                    </div>
+
+                </div>
+
+                <div class="report-form">
+
+                    <div class="form-group">
+                        <label>From Date (Joining Date)</label>
+                        <input type="date" id="reportFromDate" oninput="updateReportPreview()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>To Date (Joining Date)</label>
+                        <input type="date" id="reportToDate" oninput="updateReportPreview()">
+                    </div>
+
+                    <p id="reportPreviewText" class="report-preview-text">
+                        Leave both blank to export all students.
+                    </p>
+
+                    <button class="add-student-btn" onclick="downloadReport()">
+                        ⬇ Download Excel Report
+                    </button>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+
+    <!-- ================================================= -->
+    <!--                  STUDENT MODAL                    -->
+    <!-- ================================================= -->
+
+    <div class="modal-overlay"
+         id="studentModal">
+
+        <div class="modal">
+
+            <div class="modal-header">
+
+                <div>
+                    <h2>Add New Student</h2>
+                    <p>Enter student information</p>
+                </div>
+
+                <button class="close-btn"
+                        onclick="closeStudentModal()">
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="studentForm"
+                  onsubmit="addStudent(event)">
+
+                <!-- Student Name -->
+
+                <div class="form-group">
+
+                    <label>
+                        Student Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="studentName"
+                        placeholder="Enter full name"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- Mobile -->
+
+                <div class="form-group">
+
+                    <label>
+                        Mobile Number
+                    </label>
+
+                    <input
+                        type="tel"
+                        id="studentMobile"
+                        placeholder="Enter mobile number"
+                        maxlength="10"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- Section -->
+
+                <div class="form-row">
+
+                    <div class="form-group">
+
+                        <label>
+                            Section
+                        </label>
+
+                        <select id="studentSection"
+                                onchange="updateSetOptions()"
+                                required>
+
+                            <option value="">
+                                Select Section
+                            </option>
+
+                            <option value="General">
+                                General
+                            </option>
+
+                            <option value="VIP">
+                                VIP
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- Set -->
+
+                    <div class="form-group">
+
+                        <label>
+                            Set Number
+                        </label>
+
+                        <select id="studentSet"
+                                required>
+
+                            <option value="">
+                                Select Set
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Dates -->
+
+                <div class="form-row">
+
+                    <div class="form-group">
+
+                        <label>
+                            Joining Date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="joiningDate"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Expiry Date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="expiryDate"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- Fees -->
+
+                <div class="form-row">
+
+                    <div class="form-group">
+
+                        <label>
+                            Fees
+                        </label>
+
+                        <input
+                            type="number"
+                            id="studentFees"
+                            placeholder="₹ Enter fees"
+                            min="0"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Payment Mode
+                        </label>
+
+                        <select id="paymentMode"
+                                required>
+
+                            <option value="">
+                                Select Payment
+                            </option>
+
+                            <option value="Cash">
+                                Cash
+                            </option>
+
+                            <option value="UPI">
+                                UPI
+                            </option>
+
+                            <option value="Other">
+                                Other
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Notes -->
+
+                <div class="form-group">
+
+                    <label>
+                        Notes
+                    </label>
+
+                    <textarea
+                        id="studentNotes"
+                        placeholder="Optional notes..."
+                        rows="3"></textarea>
+
+                </div>
+
+
+                <!-- Buttons -->
+
+                <div class="modal-buttons">
+
+                    <button type="button"
+                            class="cancel-btn"
+                            onclick="closeStudentModal()">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                            class="save-btn">
+                        Save Student
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!--                  SET INFORMATION MODAL            -->
+    <!-- ================================================= -->
+
+    <div class="modal-overlay"
+         id="setModal">
+
+        <div class="modal set-modal">
+
+            <div class="modal-header">
+
+                <div>
+                    <h2 id="setModalTitle">
+                        Set Information
+                    </h2>
+
+                    <p id="setModalSubtitle">
+                        Set details
+                    </p>
+                </div>
+
+                <button class="close-btn"
+                        onclick="closeSetModal()">
+                    ×
+                </button>
+
+            </div>
+
+
+            <div id="setInformation">
+
+                <!-- Information generated by JavaScript -->
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= JAVASCRIPT ================= -->
+
+    <script>
+
+        /* ================================================
+           STUDENT DATA
+           (this is just a local cache of what's in the
+           database - it gets refreshed from the server,
+           never the other way around)
+        ================================================= */
+
+        let students = [];
+
+
+        /* ================================================
+           LOAD STUDENTS FROM SERVER
+        ================================================= */
+
+        async function loadStudents() {
+
+            try {
+
+                const response =
+                    await fetch("/api/students");
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Failed to load students"
+                    );
+
+                }
+
+                students = await response.json();
+
+            } catch (error) {
+
+                console.error(
+                    "Could not load students:",
+                    error
+                );
+
+                alert(
+                    "Could not load student data from the server. Please check your connection and refresh."
+                );
+
+                students = [];
+
+            }
+
+            updateAllSetStatuses();
+            updateDashboard();
+            renderStudentsList();
+
+        }
+
+
+        /* ================================================
+           SWITCH BETWEEN DASHBOARD / STUDENTS PAGE
+        ================================================= */
+
+        function showPage(page, navEl) {
+
+            document
+                .querySelectorAll(".nav-item")
+                .forEach(item => {
+                    item.classList.remove("active");
+                });
+
+            navEl.classList.add("active");
+
+
+            const dashboardPage =
+                document.getElementById("dashboardPage");
+
+            const studentsPage =
+                document.getElementById("studentsPage");
+
+            const reportsPage =
+                document.getElementById("reportsPage");
+
+            const title =
+                document.getElementById("pageTitle");
+
+            const subtitle =
+                document.getElementById("pageSubtitle");
+
+
+            dashboardPage.style.display = "none";
+            studentsPage.style.display = "none";
+            reportsPage.style.display = "none";
+
+
+            if (page === "students") {
+
+                studentsPage.style.display = "block";
+
+                title.textContent = "Students";
+                subtitle.textContent = "All registered students";
+
+                renderStudentsList();
+
+            } else if (page === "reports") {
+
+                reportsPage.style.display = "block";
+
+                title.textContent = "Reports";
+                subtitle.textContent = "Export student data";
+
+                updateReportPreview();
+
+            } else {
+
+                dashboardPage.style.display = "block";
+
+                title.textContent = "Dashboard";
+                subtitle.textContent = "Study Point Management System";
+
+            }
+
+        }
+
+
+        /* ================================================
+           RENDER STUDENTS LIST (GENERAL / VIP)
+        ================================================= */
+
+        function renderStudentsList() {
+
+            const generalList =
+                document.getElementById("generalStudentsList");
+
+            const vipList =
+                document.getElementById("vipStudentsList");
+
+            const generalCount =
+                document.getElementById("generalStudentsCount");
+
+            const vipCount =
+                document.getElementById("vipStudentsCount");
+
+
+            if (!generalList || !vipList) {
+
+                return;
+
+            }
+
+
+            const generalStudents =
+                students
+                    .filter(s => s.section === "General")
+                    .sort((a, b) => a.setNumber - b.setNumber);
+
+            const vipStudents =
+                students
+                    .filter(s => s.section === "VIP")
+                    .sort((a, b) => a.setNumber - b.setNumber);
+
+
+            generalCount.textContent =
+                `${generalStudents.length} Students`;
+
+            vipCount.textContent =
+                `${vipStudents.length} Students`;
+
+
+            generalList.innerHTML =
+                generalStudents.length
+                    ? generalStudents.map(studentRowHTML).join("")
+                    : `<div class="students-empty">No students in General section yet.</div>`;
+
+            vipList.innerHTML =
+                vipStudents.length
+                    ? vipStudents.map(studentRowHTML).join("")
+                    : `<div class="students-empty">No students in VIP section yet.</div>`;
+
+        }
+
+
+        /* ================================================
+           REPORT PREVIEW COUNT
+        ================================================= */
+
+        function updateReportPreview() {
+
+            const fromDate =
+                document.getElementById("reportFromDate").value;
+
+            const toDate =
+                document.getElementById("reportToDate").value;
+
+            const previewText =
+                document.getElementById("reportPreviewText");
+
+
+            if (fromDate && toDate && fromDate > toDate) {
+
+                previewText.textContent =
+                    "'From' date cannot be after 'To' date.";
+
+                return;
+
+            }
+
+
+            const matching =
+                students.filter(student => {
+
+                    if (fromDate && student.joiningDate < fromDate) {
+                        return false;
+                    }
+
+                    if (toDate && student.joiningDate > toDate) {
+                        return false;
+                    }
+
+                    return true;
+
+                });
+
+
+            if (!fromDate && !toDate) {
+
+                previewText.textContent =
+                    `Leave both blank to export all students. (${students.length} total)`;
+
+            } else {
+
+                previewText.textContent =
+                    `${matching.length} student(s) match this range.`;
+
+            }
+
+        }
+
+
+        /* ================================================
+           DOWNLOAD EXCEL REPORT
+        ================================================= */
+
+        function downloadReport() {
+
+            const fromDate =
+                document.getElementById("reportFromDate").value;
+
+            const toDate =
+                document.getElementById("reportToDate").value;
+
+
+            if (fromDate && toDate && fromDate > toDate) {
+
+                alert(
+                    "'From' date cannot be after 'To' date."
+                );
+
+                return;
+
+            }
+
+
+            const params = new URLSearchParams();
+
+            if (fromDate) {
+                params.set("from", fromDate);
+            }
+
+            if (toDate) {
+                params.set("to", toDate);
+            }
+
+
+            window.location.href =
+                `/api/reports/export?${params.toString()}`;
+
+        }
+
+        function studentRowHTML(student) {
+
+            const setLabel =
+                student.section === "VIP"
+                    ? `VIP ${student.setNumber}`
+                    : `Set ${student.setNumber}`;
+
+            const isExpired =
+                student.status === "expired";
+
+            return `
+                <div class="student-row"
+                     onclick="showSetInformation('${student.section}', ${student.setNumber})">
+
+                    <div class="student-row-main">
+                        <span class="student-row-name">
+                            ${student.name}
+                            <span class="status-badge ${isExpired ? "expired-badge" : "active-badge"}">
+                                ${isExpired ? "Expired" : "Active"}
+                            </span>
+                        </span>
+                        <span class="student-row-meta">${student.mobile} · Expires ${formatDate(student.expiryDate)}</span>
+                    </div>
+
+                    <span class="student-row-set ${student.section === "VIP" ? "vip" : ""}">
+                        ${setLabel}
+                    </span>
+
+                </div>
+            `;
+
+        }
+
+
+        /* ================================================
+           CREATE SETS
+        ================================================= */
+
+        function createSets() {
+
+            const generalContainer =
+                document.getElementById("generalSets");
+
+            const vipContainer =
+                document.getElementById("vipSets");
+
+
+            /* GENERAL 106 SETS */
+
+            for (let i = 1; i <= 106; i++) {
+
+                createSet(
+                    generalContainer,
+                    "General",
+                    i
+                );
+
+            }
+
+
+            /* VIP 57 SETS */
+
+            for (let i = 1; i <= 57; i++) {
+
+                createSet(
+                    vipContainer,
+                    "VIP",
+                    i
+                );
+
+            }
+
+        }
+
+
+        /* ================================================
+           CREATE INDIVIDUAL SET
+        ================================================= */
+
+        function createSet(container, section, number) {
+
+            const set = document.createElement("div");
+
+            set.className = "set available";
+
+            set.dataset.section = section;
+            set.dataset.number = number;
+            set.dataset.status = "available";
+
+            set.innerHTML = `
+
+                <div class="set-number">
+                    ${section === "VIP" ? "VIP " : "Set "}
+                    ${number}
+                </div>
+
+                <div class="set-status">
+                    Available
+                </div>
+
+            `;
+
+
+            set.onclick = function () {
+
+                showSetInformation(
+                    section,
+                    number
+                );
+
+            };
+
+
+            container.appendChild(set);
+
+        }
+
+
+        /* ================================================
+           OPEN ADD STUDENT MODAL
+        ================================================= */
+
+        function openStudentModal() {
+
+            document
+                .getElementById("studentModal")
+                .classList.add("show");
+
+            updateSetOptions();
+
+        }
+
+
+        /* ================================================
+           CLOSE ADD STUDENT MODAL
+        ================================================= */
+
+        function closeStudentModal() {
+
+            document
+                .getElementById("studentModal")
+                .classList.remove("show");
+
+        }
+
+
+        /* ================================================
+           UPDATE SET DROPDOWN
+        ================================================= */
+
+        function updateSetOptions() {
+
+            const section =
+                document.getElementById("studentSection").value;
+
+            const select =
+                document.getElementById("studentSet");
+
+
+            select.innerHTML =
+                '<option value="">Select Set</option>';
+
+
+            if (section === "") {
+
+                return;
+
+            }
+
+
+            const total =
+                section === "General"
+                    ? 106
+                    : 57;
+
+
+            for (let i = 1; i <= total; i++) {
+
+                const occupied =
+                    students.some(
+                        student =>
+                            student.section === section &&
+                            student.setNumber == i &&
+                            student.status === "active"
+                    );
+
+
+                if (!occupied) {
+
+                    const option =
+                        document.createElement("option");
+
+                    option.value = i;
+
+                    option.textContent =
+                        section === "VIP"
+                            ? `VIP ${i}`
+                            : `Set ${i}`;
+
+                    select.appendChild(option);
+
+                }
+
+            }
+
+        }
+
+
+        /* ================================================
+           ADD STUDENT
+        ================================================= */
+
+        async function addStudent(event) {
+
+            event.preventDefault();
+
+
+            const name =
+                document.getElementById("studentName").value.trim();
+
+            const mobile =
+                document.getElementById("studentMobile").value.trim();
+
+            const section =
+                document.getElementById("studentSection").value;
+
+            const setNumber =
+                document.getElementById("studentSet").value;
+
+            const joiningDate =
+                document.getElementById("joiningDate").value;
+
+            const expiryDate =
+                document.getElementById("expiryDate").value;
+
+            const fees =
+                document.getElementById("studentFees").value;
+
+            const paymentMode =
+                document.getElementById("paymentMode").value;
+
+            const notes =
+                document.getElementById("studentNotes").value;
+
+
+            /* QUICK CLIENT-SIDE CHECK (server double-checks too) */
+
+            const alreadyOccupied =
+                students.some(
+                    student =>
+                        student.section === section &&
+                        student.setNumber == setNumber &&
+                        student.status === "active"
+                );
+
+
+            if (alreadyOccupied) {
+
+                alert(
+                    "This set is already occupied."
+                );
+
+                return;
+
+            }
+
+
+            /* SEND TO SERVER - this is what actually saves it */
+
+            let result;
+
+            try {
+
+                const response =
+                    await fetch("/api/students", {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+
+                            name: name,
+                            mobile: mobile,
+                            section: section,
+                            setNumber: setNumber,
+                            joiningDate: joiningDate,
+                            expiryDate: expiryDate,
+                            fees: fees,
+                            paymentMode: paymentMode,
+                            notes: notes
+
+                        })
+
+                    });
+
+                result = await response.json();
+
+                if (!response.ok || !result.success) {
+
+                    alert(
+                        result.message ||
+                        "Could not add student."
+                    );
+
+                    return;
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Could not add student:",
+                    error
+                );
+
+                alert(
+                    "Could not reach the server. Please check your connection and try again."
+                );
+
+                return;
+
+            }
+
+
+            /* REFRESH FROM SERVER SO EVERY DEVICE STAYS IN SYNC */
+
+            await loadStudents();
+
+            updateSetOptions();
+
+
+            /* RESET FORM */
+
+            document
+                .getElementById("studentForm")
+                .reset();
+
+
+            closeStudentModal();
+
+
+            alert(
+                "Student added successfully!"
+            );
+
+        }
+
+
+        /* ================================================
+           UPDATE SET STATUS
+        ================================================= */
+
+        /* ================================================
+           FIND WHO OCCUPIES A SEAT
+           (an "active" student blocks the seat; an
+           "expired" student is just history and the seat
+           is really available again for a new student)
+        ================================================= */
+
+        function getSeatOccupant(section, number) {
+
+            const matches =
+                students.filter(
+                    student =>
+                        student.section === section &&
+                        student.setNumber == number
+                );
+
+
+            const active =
+                matches.find(
+                    student => student.status === "active"
+                );
+
+
+            if (active) {
+
+                return { status: "occupied", student: active };
+
+            }
+
+
+            if (matches.length > 0) {
+
+                const latestExpired =
+                    matches
+                        .slice()
+                        .sort(
+                            (a, b) =>
+                                b.expiryDate.localeCompare(a.expiryDate)
+                        )[0];
+
+                return { status: "expired", student: latestExpired };
+
+            }
+
+
+            return { status: "available", student: null };
+
+        }
+
+
+        /* ================================================
+           UPDATE ALL SET STATUSES
+        ================================================= */
+
+        function updateAllSetStatuses() {
+
+            const allSets =
+                document.querySelectorAll(".set");
+
+
+            allSets.forEach(set => {
+
+                const section =
+                    set.dataset.section;
+
+                const number =
+                    set.dataset.number;
+
+
+                const seat =
+                    getSeatOccupant(section, number);
+
+
+                set.classList.remove(
+                    "available",
+                    "occupied",
+                    "expired"
+                );
+
+                set.classList.add(seat.status);
+
+                set.dataset.status = seat.status;
+
+
+                const labelMap = {
+                    occupied: "Occupied",
+                    expired: "Expired",
+                    available: "Available"
+                };
+
+
+                set.innerHTML = `
+
+                    <div class="set-number">
+                        ${section === "VIP" ? "VIP " : "Set "}
+                        ${number}
+                    </div>
+
+                    <div class="set-status">
+                        ${labelMap[seat.status]}
+                    </div>
+
+                `;
+
+            });
+
+        }
+
+
+        /* ================================================
+           UPDATE DASHBOARD
+        ================================================= */
+
+        function updateDashboard() {
+
+            const activeStudents =
+                students.filter(
+                    student => student.status === "active"
+                );
+
+
+            const occupied =
+                activeStudents.length;
+
+            const total =
+                163;
+
+            const available =
+                total - occupied;
+
+
+            document
+                .getElementById("occupiedSets")
+                .textContent = occupied;
+
+
+            document
+                .getElementById("availableSets")
+                .textContent = available;
+
+
+            document
+                .getElementById("totalStudents")
+                .textContent = students.length;
+
+
+            /* GENERAL */
+
+            const generalOccupied =
+                activeStudents.filter(
+                    student =>
+                        student.section === "General"
+                ).length;
+
+
+            document
+                .getElementById("generalAvailable")
+                .textContent =
+                `${106 - generalOccupied} Available`;
+
+
+            /* VIP */
+
+            const vipOccupied =
+                activeStudents.filter(
+                    student =>
+                        student.section === "VIP"
+                ).length;
+
+
+            document
+                .getElementById("vipAvailable")
+                .textContent =
+                `${57 - vipOccupied} Available`;
+
+        }
+
+
+        /* ================================================
+           SHOW SET INFORMATION
+        ================================================= */
+
+        function showSetInformation(
+            section,
+            number
+        ) {
+
+            const modal =
+                document.getElementById("setModal");
+
+
+            const title =
+                document.getElementById("setModalTitle");
+
+
+            const subtitle =
+                document.getElementById("setModalSubtitle");
+
+
+            const information =
+                document.getElementById("setInformation");
+
+
+            const seat =
+                getSeatOccupant(section, number);
+
+            const student =
+                seat.student;
+
+
+            title.textContent =
+                section === "VIP"
+                    ? `VIP ${number}`
+                    : `Set ${number}`;
+
+
+            subtitle.textContent =
+                `${section} Section`;
+
+
+            if (seat.status === "available") {
+
+                information.innerHTML = `
+
+                    <div class="available-information">
+
+                        <div class="big-check">
+                            ✓
+                        </div>
+
+                        <h3>Set Available</h3>
+
+                        <p>
+                            No student is currently assigned
+                            to this set.
+                        </p>
+
+                        <button
+                            class="save-btn"
+                            onclick="addStudentToSet('${section}', '${number}')">
+
+                            + Add Student
+
+                        </button>
+
+                    </div>
+
+                `;
+
+            } else if (seat.status === "expired") {
+
+                information.innerHTML = `
+
+                    <div class="student-information">
+
+                        <div class="student-status expired-status">
+                            ● Expired
+                        </div>
+
+                        <p class="expired-note">
+                            This set is free again. Showing the last student's details below — renew them, or add a new student to this set.
+                        </p>
+
+                        <div class="student-detail">
+
+                            <span>Last Student</span>
+
+                            <strong>
+                                ${student.name}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="student-detail">
+
+                            <span>Mobile Number</span>
+
+                            <strong>
+                                ${student.mobile}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="detail-row">
+
+                            <div class="student-detail">
+
+                                <span>Joining Date</span>
+
+                                <strong>
+                                    ${formatDate(student.joiningDate)}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="student-detail">
+
+                                <span>Expired On</span>
+
+                                <strong>
+                                    ${formatDate(student.expiryDate)}
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="modal-buttons">
+
+                            <button
+                                class="cancel-btn"
+                                onclick="closeSetModal()">
+
+                                Close
+
+                            </button>
+
+                            <button
+                                class="save-btn"
+                                onclick="addStudentToSet('${section}', '${number}')">
+
+                                + Add / Renew Student
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+            } else {
+
+                information.innerHTML = `
+
+                    <div class="student-information">
+
+                        <div class="student-status occupied-status">
+                            ● Occupied
+                        </div>
+
+                        <div class="student-detail">
+
+                            <span>Student Name</span>
+
+                            <strong>
+                                ${student.name}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="student-detail">
+
+                            <span>Mobile Number</span>
+
+                            <strong>
+                                ${student.mobile}
+                            </strong>
+
+                        </div>
+
+
+                        <div class="detail-row">
+
+                            <div class="student-detail">
+
+                                <span>Joining Date</span>
+
+                                <strong>
+                                    ${formatDate(student.joiningDate)}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="student-detail">
+
+                                <span>Expiry Date</span>
+
+                                <strong>
+                                    ${formatDate(student.expiryDate)}
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="detail-row">
+
+                            <div class="student-detail">
+
+                                <span>Fees</span>
+
+                                <strong>
+                                    ₹${student.fees}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="student-detail">
+
+                                <span>Payment</span>
+
+                                <strong>
+                                    ${student.paymentMode}
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        ${
+                            student.notes
+                            ?
+                            `
+                            <div class="student-detail">
+
+                                <span>Notes</span>
+
+                                <strong>
+                                    ${student.notes}
+                                </strong>
+
+                            </div>
+                            `
+                            :
+                            ""
+                        }
+
+
+                        <div class="modal-buttons">
+
+                            <button
+                                class="cancel-btn"
+                                onclick="closeSetModal()">
+
+                                Close
+
+                            </button>
+
+                            <button
+                                class="save-btn"
+                                onclick="removeStudent(${student.id})">
+
+                                Remove Student
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+            }
+
+
+            modal.classList.add("show");
+
+        }
+
+
+        /* ================================================
+           ADD STUDENT DIRECTLY TO SET
+        ================================================= */
+
+        function addStudentToSet(
+            section,
+            number
+        ) {
+
+            closeSetModal();
+
+            openStudentModal();
+
+
+            document
+                .getElementById("studentSection")
+                .value = section;
+
+
+            updateSetOptions();
+
+
+            document
+                .getElementById("studentSet")
+                .value = number;
+
+        }
+
+
+        /* ================================================
+           CLOSE SET MODAL
+        ================================================= */
+
+        function closeSetModal() {
+
+            document
+                .getElementById("setModal")
+                .classList.remove("show");
+
+        }
+
+
+        /* ================================================
+           REMOVE STUDENT
+        ================================================= */
+
+        async function removeStudent(id) {
+
+            const confirmRemove =
+                confirm(
+                    "Are you sure you want to remove this student?"
+                );
+
+
+            if (!confirmRemove) {
+
+                return;
+
+            }
+
+
+            try {
+
+                const response =
+                    await fetch(`/api/students/${id}`, {
+                        method: "DELETE"
+                    });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+
+                    alert(
+                        result.message ||
+                        "Could not remove student."
+                    );
+
+                    return;
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Could not remove student:",
+                    error
+                );
+
+                alert(
+                    "Could not reach the server. Please check your connection and try again."
+                );
+
+                return;
+
+            }
+
+
+            await loadStudents();
+
+            updateSetOptions();
+
+            closeSetModal();
+
+
+            alert(
+                "Student removed successfully."
+            );
+
+        }
+
+
+        /* ================================================
+           FORMAT DATE
+        ================================================= */
+
+        function formatDate(date) {
+
+            if (!date) {
+
+                return "-";
+
+            }
+
+
+            const parts =
+                date.split("-");
+
+
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+
+        }
+
+
+        /* ================================================
+           FILTER SETS
+        ================================================= */
+
+        function filterSets(
+            filter,
+            button
+        ) {
+
+            document
+                .querySelectorAll(".filter-btn")
+                .forEach(btn => {
+
+                    btn.classList.remove("active");
+
+                });
+
+
+            button.classList.add("active");
+
+
+            document
+                .querySelectorAll(".set")
+                .forEach(set => {
+
+                    if (filter === "all") {
+
+                        set.style.display = "flex";
+
+                    }
+
+                    else if (
+                        filter === set.dataset.status
+                    ) {
+
+                        set.style.display = "flex";
+
+                    }
+
+                    else {
+
+                        set.style.display = "none";
+
+                    }
+
+                });
+
+        }
+
+
+        /* ================================================
+           SEARCH SETS
+        ================================================= */
+
+        function searchSets() {
+
+            const search =
+                document
+                    .getElementById("setSearch")
+                    .value
+                    .toLowerCase()
+                    .trim();
+
+
+            document
+                .querySelectorAll(".set")
+                .forEach(set => {
+
+                    const number =
+                        set.dataset.number;
+
+
+                    const section =
+                        set.dataset.section
+                            .toLowerCase();
+
+
+                    if (
+                        number.includes(search) ||
+                        section.includes(search)
+                    ) {
+
+                        set.style.display = "flex";
+
+                    } else {
+
+                        set.style.display = "none";
+
+                    }
+
+                });
+
+        }
+
+
+        /* ================================================
+           MOBILE SIDEBAR
+        ================================================= */
+
+        function toggleSidebar() {
+
+            document
+                .getElementById("sidebar")
+                .classList.toggle("show");
+
+        }
+
+
+        /* ================================================
+           CLOSE MODALS ON OUTSIDE CLICK
+        ================================================= */
+
+        window.onclick =
+            function(event) {
+
+                const studentModal =
+                    document.getElementById(
+                        "studentModal"
+                    );
+
+                const setModal =
+                    document.getElementById(
+                        "setModal"
+                    );
+
+
+                if (event.target === studentModal) {
+
+                    closeStudentModal();
+
+                }
+
+
+                if (event.target === setModal) {
+
+                    closeSetModal();
+
+                }
+
+            };
+
+
+        /* ================================================
+           INITIALIZE
+        ================================================= */
+
+        createSets();
+
+        loadStudents();
+
+    </script>
+
+</body>
+</html>
