@@ -566,6 +566,12 @@ body {
     color: #7c3aed;
 }
 
+.section-total.vvip {
+    background: #fdf2f8;
+
+    color: #be185d;
+}
+
 
 /* =====================================================
    SET CONTAINER
@@ -1454,6 +1460,10 @@ body {
 
 .student-row-set.vip {
     color: var(--warning);
+}
+
+.student-row-set.vvip {
+    color: #be185d;
 }
 
 .students-empty {

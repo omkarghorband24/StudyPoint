@@ -343,7 +343,7 @@ def add_student():
         }), 400
 
 
-    if section not in ["General", "VIP"]:
+    if section not in ["General", "VIP", "VVIP"]:
 
         return jsonify({
             "success": False,
@@ -412,6 +412,14 @@ def add_student():
         return jsonify({
             "success": False,
             "message": "Invalid VIP set number."
+        }), 400
+
+
+    if section == "VVIP" and not (1 <= set_number <= 12):
+
+        return jsonify({
+            "success": False,
+            "message": "Invalid VVIP set number."
         }), 400
 
 
@@ -632,11 +640,20 @@ def dashboard():
         """, (today,)).fetchone()[0]
 
 
-        total_sets = 163
+        vvip_occupied = conn.execute("""
+            SELECT COUNT(*)
+            FROM students
+            WHERE section = 'VVIP'
+            AND expiry_date >= ?
+        """, (today,)).fetchone()[0]
+
+
+        total_sets = 175
 
         occupied_sets = (
             general_occupied +
-            vip_occupied
+            vip_occupied +
+            vvip_occupied
         )
 
         available_sets = (
@@ -652,6 +669,11 @@ def dashboard():
         vip_available = (
             57 -
             vip_occupied
+        )
+
+        vvip_available = (
+            12 -
+            vvip_occupied
         )
 
 
@@ -671,7 +693,11 @@ def dashboard():
 
             "vipOccupied": vip_occupied,
 
-            "vipAvailable": vip_available
+            "vipAvailable": vip_available,
+
+            "vvipOccupied": vvip_occupied,
+
+            "vvipAvailable": vvip_available
 
         })
 
