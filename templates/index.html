@@ -927,18 +927,30 @@
 
             const generalStudents =
                 students
-                    .filter(s => s.section === "General" && s.status === "active")
-                    .sort((a, b) => a.setNumber - b.setNumber);
+                    .filter(s => s.section === "General")
+                    .sort((a, b) =>
+                        a.setNumber - b.setNumber ||
+                        (a.status === "active" ? -1 : 1) -
+                        (b.status === "active" ? -1 : 1)
+                    );
 
             const vipStudents =
                 students
-                    .filter(s => s.section === "VIP" && s.status === "active")
-                    .sort((a, b) => a.setNumber - b.setNumber);
+                    .filter(s => s.section === "VIP")
+                    .sort((a, b) =>
+                        a.setNumber - b.setNumber ||
+                        (a.status === "active" ? -1 : 1) -
+                        (b.status === "active" ? -1 : 1)
+                    );
 
             const vvipStudents =
                 students
-                    .filter(s => s.section === "VVIP" && s.status === "active")
-                    .sort((a, b) => a.setNumber - b.setNumber);
+                    .filter(s => s.section === "VVIP")
+                    .sort((a, b) =>
+                        a.setNumber - b.setNumber ||
+                        (a.status === "active" ? -1 : 1) -
+                        (b.status === "active" ? -1 : 1)
+                    );
 
 
             generalCount.textContent =
