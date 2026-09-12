@@ -1333,44 +1333,18 @@
 
         function getSeatOccupant(section, number) {
 
-            const matches =
-                students.filter(
-                    student =>
-                        student.section === section &&
-                        student.setNumber == number
-                );
-
-
-            const active =
-                matches.find(
-                    student => student.status === "active"
-                );
-
+            const active = students.find(
+                student =>
+                    student.section === section &&
+                    student.setNumber == number &&
+                    student.status === "active"
+            );
 
             if (active) {
-
                 return { status: "occupied", student: active };
-
             }
-
-
-            if (matches.length > 0) {
-
-                const latestExpired =
-                    matches
-                        .slice()
-                        .sort(
-                            (a, b) =>
-                                b.expiryDate.localeCompare(a.expiryDate)
-                        )[0];
-
-                return { status: "expired", student: latestExpired };
-
-            }
-
 
             return { status: "available", student: null };
-
         }
 
 
@@ -1467,7 +1441,7 @@
 
             document
                 .getElementById("totalStudents")
-                .textContent = students.length;
+                .textContent = activeStudents.length;
 
 
             /* GENERAL */
