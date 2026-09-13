@@ -1868,6 +1868,175 @@ def download_backup(backup_id):
 
 
 # =====================================================
+# BULK DOWNLOAD BACKUPS (SINGLE SHEET, DATE RANGE)
+# =====================================================
+
+@app.route("/api/backups/bulk-download", methods=["GET"])
+@login_required
+def bulk_download_backups():
+
+    from_date = request.args.get("from", "").strip()
+    to_date = request.args.get("to", "").strip()
+
+    conn = get_db()
+
+    try:
+
+        query = """
+            SELECT id, action, triggered_by, snapshot_data, created_at
+            FROM backups
+            WHERE 1=1
+        """
+
+        params = []
+
+        if from_date:
+            query += " AND created_at >= ?"
+            params.append(from_date + " 00:00:00")
+
+        if to_date:
+            query += " AND created_at <= ?"
+            params.append(to_date + " 23:59:59")
+
+        query += " ORDER BY created_at ASC"
+
+        backups = conn.execute(query, params).fetchall()
+
+    finally:
+
+        conn.close()
+
+
+    if not backups:
+
+        return jsonify({
+            "success": False,
+            "message": "No backups found for this date range."
+        }), 404
+
+
+    # -------------------------------------------------
+    # BUILD SINGLE-SHEET EXCEL
+    # -------------------------------------------------
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Backups"
+
+    headers = [
+        "Backup Time", "Action", "Name", "Mobile", "Section",
+        "Set Number", "Joining Date", "Expiry Date", "Status",
+        "Fees", "Payment Mode", "Notes"
+    ]
+
+    header_font = Font(
+        name="Arial", bold=True, color="FFFFFF", size=11
+    )
+
+    header_fill = PatternFill(
+        start_color="2563EB",
+        end_color="2563EB",
+        fill_type="solid"
+    )
+
+    normal_font = Font(name="Arial", size=11)
+    bold_font = Font(name="Arial", size=11, bold=True)
+
+
+    for col, header in enumerate(headers, start=1):
+
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(
+            horizontal="center", vertical="center"
+        )
+
+    ws.row_dimensions[1].height = 22
+
+
+    row_idx = 2
+    total_backups = 0
+
+    for backup in backups:
+
+        try:
+            snapshot = json.loads(backup["snapshot_data"])
+        except Exception:
+            continue
+
+        total_backups += 1
+
+        action_label = (
+            "Added"
+            if backup["action"] == "add"
+            else "Removed"
+        )
+
+        for student in snapshot:
+
+            values = [
+                backup["created_at"],
+                f'{action_label} ({backup["triggered_by"] or ""})',
+                student.get("name"),
+                student.get("mobile"),
+                student.get("section"),
+                student.get("setNumber"),
+                student.get("joiningDate"),
+                student.get("expiryDate"),
+                "Expired" if student.get("status") == "expired" else "Active",
+                student.get("fees") or 0,
+                student.get("paymentMode"),
+                student.get("notes") or ""
+            ]
+
+            for col_idx, value in enumerate(values, start=1):
+
+                cell = ws.cell(row=row_idx, column=col_idx, value=value)
+                cell.font = normal_font
+
+            row_idx += 1
+
+
+    column_widths = [18, 22, 22, 15, 10, 12, 14, 14, 10, 10, 14, 28]
+
+    for i, width in enumerate(column_widths, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = width
+
+
+    summary_row = row_idx + 1
+
+    range_label = "All time"
+
+    if from_date or to_date:
+        range_label = f"{from_date or 'Start'} to {to_date or 'Today'}"
+
+    ws.cell(row=summary_row, column=1, value="Date Range:").font = bold_font
+    ws.cell(row=summary_row, column=2, value=range_label).font = normal_font
+
+    ws.cell(row=summary_row + 1, column=1, value="Total Backups:").font = bold_font
+    ws.cell(row=summary_row + 1, column=2, value=total_backups).font = normal_font
+
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    filename_range = f"{from_date or 'all'}_to_{to_date or 'all'}"
+    filename = f"backups_{filename_range}.xlsx"
+
+    return send_file(
+        output,
+        mimetype=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+        as_attachment=True,
+        download_name=filename
+    )
+
+
+# =====================================================
 # INITIALIZE DATABASE
 # =====================================================
 

@@ -589,6 +589,10 @@
                         <input type="date" id="backupToDate" oninput="loadBackups()">
                     </div>
 
+                    <button class="add-student-btn" style="margin-bottom:0;" onclick="downloadAllBackups()">
+                        ⬇ Download All (Excel)
+                    </button>
+
                 </div>
 
                 <div id="backupsList" class="students-list">
@@ -1699,6 +1703,44 @@
 
             window.location.href =
                 `/api/backups/${id}/download`;
+
+        }
+
+
+        /* ================================================
+           BACKUP PAGE: BULK DOWNLOAD (DATE RANGE)
+        ================================================= */
+
+        function downloadAllBackups() {
+
+            const fromDate =
+                document.getElementById("backupFromDate").value;
+
+            const toDate =
+                document.getElementById("backupToDate").value;
+
+
+            if (fromDate && toDate && fromDate > toDate) {
+
+                alert("'From' date cannot be after 'To' date.");
+                return;
+
+            }
+
+
+            const params = new URLSearchParams();
+
+            if (fromDate) {
+                params.set("from", fromDate);
+            }
+
+            if (toDate) {
+                params.set("to", toDate);
+            }
+
+
+            window.location.href =
+                `/api/backups/bulk-download?${params.toString()}`;
 
         }
 
