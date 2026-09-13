@@ -1,8 +1,10 @@
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for
 import sqlite3
 import os
+import functools
 from io import BytesIO
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill
@@ -18,6 +20,14 @@ except ImportError:
 
 
 app = Flask(__name__)
+
+# Needed to keep login sessions secure.
+# On Render, set a SECRET_KEY environment variable
+# so sessions survive restarts/deploys.
+app.secret_key = os.environ.get(
+    "SECRET_KEY",
+    "studypoint-dev-secret-change-this"
+)
 
 
 # =====================================================
@@ -158,7 +168,65 @@ def init_database():
                 )
             """)
 
+        if USE_POSTGRES:
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS admins (
+                    id SERIAL PRIMARY KEY,
+                    username TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+            """)
+
+        else:
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS admins (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+            """)
+
         conn.commit()
+
+
+        # -------------------------------------------------
+        # SEED 3 DEFAULT ADMIN ACCOUNTS (only if none exist)
+        # -------------------------------------------------
+
+        existing_admin = conn.execute(
+            "SELECT id FROM admins LIMIT 1"
+        ).fetchone()
+
+        if not existing_admin:
+
+            default_admins = [
+                ("admin1", "Admin@123"),
+                ("admin2", "Admin@123"),
+                ("admin3", "Admin@123")
+            ]
+
+            created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            for username, password in default_admins:
+
+                conn.execute("""
+                    INSERT INTO admins (username, password_hash, created_at)
+                    VALUES (?, ?, ?)
+                """, (
+                    username,
+                    generate_password_hash(password),
+                    created_at
+                ))
+
+            conn.commit()
+
+            print("Seeded 3 default admin accounts: admin1, admin2, admin3 (password: Admin@123)")
+            print("IMPORTANT: Change these passwords after first login.")
+
 
         print("Database initialized successfully.")
 
@@ -179,10 +247,89 @@ def init_database():
 
 
 # =====================================================
+# LOGIN REQUIRED DECORATOR
+# =====================================================
+
+def login_required(view_function):
+
+    @functools.wraps(view_function)
+    def wrapper(*args, **kwargs):
+
+        if not session.get("admin_id"):
+
+            if request.path.startswith("/api/"):
+
+                return jsonify({
+                    "success": False,
+                    "message": "Please log in first."
+                }), 401
+
+            return redirect(url_for("login"))
+
+        return view_function(*args, **kwargs)
+
+    return wrapper
+
+
+# =====================================================
+# LOGIN / LOGOUT
+# =====================================================
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "GET":
+
+        return render_template("login.html", error=None)
+
+
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "")
+
+
+    conn = get_db()
+
+    try:
+
+        admin = conn.execute("""
+            SELECT id, username, password_hash
+            FROM admins
+            WHERE username = ?
+        """, (username,)).fetchone()
+
+    finally:
+
+        conn.close()
+
+
+    if admin and check_password_hash(admin["password_hash"], password):
+
+        session["admin_id"] = admin["id"]
+        session["admin_username"] = admin["username"]
+
+        return redirect(url_for("index"))
+
+
+    return render_template(
+        "login.html",
+        error="Invalid username or password."
+    )
+
+
+@app.route("/logout")
+def logout():
+
+    session.clear()
+
+    return redirect(url_for("login"))
+
+
+# =====================================================
 # HOME PAGE
 # =====================================================
 
 @app.route("/")
+@login_required
 def index():
 
     return render_template("index.html")
@@ -193,6 +340,7 @@ def index():
 # =====================================================
 
 @app.route("/api/students", methods=["GET"])
+@login_required
 def get_students():
 
     today = datetime.now().strftime("%Y-%m-%d")
@@ -252,6 +400,7 @@ def get_students():
 # =====================================================
 
 @app.route("/api/students", methods=["POST"])
+@login_required
 def add_student():
 
     data = request.get_json(silent=True)
@@ -554,6 +703,7 @@ def add_student():
 # =====================================================
 
 @app.route("/api/students/<int:student_id>", methods=["DELETE"])
+@login_required
 def delete_student(student_id):
 
     conn = get_db()
@@ -609,6 +759,7 @@ def delete_student(student_id):
 # =====================================================
 
 @app.route("/api/dashboard", methods=["GET"])
+@login_required
 def dashboard():
 
     today = datetime.now().strftime("%Y-%m-%d")
@@ -720,6 +871,7 @@ def dashboard():
 # =====================================================
 
 @app.route("/api/reports/export", methods=["GET"])
+@login_required
 def export_report():
 
     from_date = request.args.get(
