@@ -1,9 +1,10 @@
 from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for
 import sqlite3
 import os
+import json
 import functools
 from io import BytesIO
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from openpyxl import Workbook
@@ -226,6 +227,41 @@ def init_database():
 
             print("Seeded 3 default admin accounts: admin1, admin2, admin3 (password: Admin@123)")
             print("IMPORTANT: Change these passwords after first login.")
+
+
+        # -------------------------------------------------
+        # BACKUPS TABLE
+        # (stores a full snapshot of all students every
+        # time someone is added or removed)
+        # -------------------------------------------------
+
+        if USE_POSTGRES:
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS backups (
+                    id SERIAL PRIMARY KEY,
+                    action TEXT NOT NULL,
+                    triggered_by TEXT,
+                    student_count INTEGER NOT NULL,
+                    snapshot_data TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+            """)
+
+        else:
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS backups (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    action TEXT NOT NULL,
+                    triggered_by TEXT,
+                    student_count INTEGER NOT NULL,
+                    snapshot_data TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                )
+            """)
+
+        conn.commit()
 
 
         print("Database initialized successfully.")
@@ -703,6 +739,87 @@ def get_students():
 
 
 # =====================================================
+# BACKUP SNAPSHOT HELPER
+# (called after a student is successfully added or
+# removed - saves a full snapshot of all students at
+# that moment, and cleans up snapshots older than 90 days)
+# =====================================================
+
+def create_backup_snapshot(conn, action, triggered_by):
+
+    try:
+
+        today = datetime.now().strftime("%Y-%m-%d")
+
+        students = conn.execute("""
+            SELECT *
+            FROM students
+            ORDER BY id DESC
+        """).fetchall()
+
+        snapshot = []
+
+        for student in students:
+
+            status = (
+                "expired"
+                if student["expiry_date"] < today
+                else "active"
+            )
+
+            snapshot.append({
+                "name": student["name"],
+                "mobile": student["mobile"],
+                "section": student["section"],
+                "setNumber": student["set_number"],
+                "joiningDate": student["joining_date"],
+                "expiryDate": student["expiry_date"],
+                "fees": student["fees"],
+                "paymentMode": student["payment_mode"],
+                "notes": student["notes"] or "",
+                "status": status
+            })
+
+        created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        conn.execute("""
+            INSERT INTO backups (
+                action, triggered_by, student_count, snapshot_data, created_at
+            )
+            VALUES (?, ?, ?, ?, ?)
+        """, (
+            action,
+            triggered_by,
+            len(snapshot),
+            json.dumps(snapshot),
+            created_at
+        ))
+
+
+        # ---------------------------------------------
+        # CLEAN UP BACKUPS OLDER THAN 90 DAYS
+        # ---------------------------------------------
+
+        cutoff_date = (
+            datetime.now() - timedelta(days=90)
+        ).strftime("%Y-%m-%d %H:%M:%S")
+
+        conn.execute("""
+            DELETE FROM backups
+            WHERE created_at < ?
+        """, (cutoff_date,))
+
+
+        conn.commit()
+
+    except Exception as e:
+
+        # A failed backup snapshot should never break the
+        # actual add/remove operation, so we just log it.
+        print("Error creating backup snapshot:", e)
+
+
+# =====================================================
 # ADD NEW STUDENT
 # =====================================================
 
@@ -984,6 +1101,9 @@ def add_student():
         conn.commit()
 
 
+        create_backup_snapshot(conn, "add", name)
+
+
         return jsonify({
             "success": True,
             "message": "Student added successfully.",
@@ -1018,7 +1138,7 @@ def delete_student(student_id):
     try:
 
         student = conn.execute("""
-            SELECT id
+            SELECT id, name
             FROM students
             WHERE id = ?
         """, (student_id,)).fetchone()
@@ -1039,6 +1159,9 @@ def delete_student(student_id):
 
 
         conn.commit()
+
+
+        create_backup_snapshot(conn, "remove", student["name"])
 
 
         return jsonify({
@@ -1512,6 +1635,235 @@ def export_report():
 
         download_name=filename
 
+    )
+
+
+# =====================================================
+# LIST BACKUPS
+# =====================================================
+
+@app.route("/api/backups", methods=["GET"])
+@login_required
+def get_backups():
+
+    from_date = request.args.get("from", "").strip()
+    to_date = request.args.get("to", "").strip()
+
+    conn = get_db()
+
+    try:
+
+        query = """
+            SELECT id, action, triggered_by, student_count, created_at
+            FROM backups
+            WHERE 1=1
+        """
+
+        params = []
+
+
+        if from_date:
+
+            query += " AND created_at >= ?"
+            params.append(from_date + " 00:00:00")
+
+
+        if to_date:
+
+            query += " AND created_at <= ?"
+            params.append(to_date + " 23:59:59")
+
+
+        query += " ORDER BY created_at DESC"
+
+
+        rows = conn.execute(query, params).fetchall()
+
+
+        result = []
+
+        for row in rows:
+
+            result.append({
+                "id": row["id"],
+                "action": row["action"],
+                "triggeredBy": row["triggered_by"] or "",
+                "studentCount": row["student_count"],
+                "createdAt": row["created_at"]
+            })
+
+        return jsonify(result)
+
+    except Exception as e:
+
+        print("Error listing backups:", e)
+
+        return jsonify({
+            "success": False,
+            "message": "Unable to load backups."
+        }), 500
+
+    finally:
+
+        conn.close()
+
+
+# =====================================================
+# DOWNLOAD A BACKUP (EXCEL)
+# =====================================================
+
+@app.route("/api/backups/<int:backup_id>/download", methods=["GET"])
+@login_required
+def download_backup(backup_id):
+
+    conn = get_db()
+
+    try:
+
+        backup = conn.execute("""
+            SELECT id, action, triggered_by, snapshot_data, created_at
+            FROM backups
+            WHERE id = ?
+        """, (backup_id,)).fetchone()
+
+    finally:
+
+        conn.close()
+
+
+    if not backup:
+
+        return jsonify({
+            "success": False,
+            "message": "Backup not found."
+        }), 404
+
+
+    try:
+
+        snapshot = json.loads(backup["snapshot_data"])
+
+    except Exception as e:
+
+        print("Error reading backup snapshot:", e)
+
+        return jsonify({
+            "success": False,
+            "message": "Could not read this backup's data."
+        }), 500
+
+
+    # -------------------------------------------------
+    # BUILD EXCEL WORKBOOK
+    # -------------------------------------------------
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Backup Snapshot"
+
+    headers = [
+        "Name", "Mobile", "Section", "Set Number",
+        "Joining Date", "Expiry Date", "Status", "Fees",
+        "Payment Mode", "Notes"
+    ]
+
+    header_font = Font(
+        name="Arial", bold=True, color="FFFFFF", size=11
+    )
+
+    header_fill = PatternFill(
+        start_color="2563EB",
+        end_color="2563EB",
+        fill_type="solid"
+    )
+
+    normal_font = Font(name="Arial", size=11)
+    bold_font = Font(name="Arial", size=11, bold=True)
+
+
+    for col, header in enumerate(headers, start=1):
+
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(
+            horizontal="center", vertical="center"
+        )
+
+    ws.row_dimensions[1].height = 22
+
+
+    total_fees = 0.0
+
+    for row_idx, student in enumerate(snapshot, start=2):
+
+        fees_value = student.get("fees") or 0
+        total_fees += float(fees_value)
+
+        values = [
+            student.get("name"),
+            student.get("mobile"),
+            student.get("section"),
+            student.get("setNumber"),
+            student.get("joiningDate"),
+            student.get("expiryDate"),
+            "Expired" if student.get("status") == "expired" else "Active",
+            fees_value,
+            student.get("paymentMode"),
+            student.get("notes") or ""
+        ]
+
+        for col_idx, value in enumerate(values, start=1):
+
+            cell = ws.cell(row=row_idx, column=col_idx, value=value)
+            cell.font = normal_font
+
+
+    column_widths = [22, 15, 10, 12, 14, 14, 10, 10, 14, 28]
+
+    for i, width in enumerate(column_widths, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = width
+
+
+    summary_start = len(snapshot) + 3
+
+    ws.cell(row=summary_start, column=1, value="Backup Taken:").font = bold_font
+    ws.cell(row=summary_start, column=2, value=backup["created_at"]).font = normal_font
+
+    ws.cell(row=summary_start + 1, column=1, value="Triggered By:").font = bold_font
+    ws.cell(
+        row=summary_start + 1,
+        column=2,
+        value=f'{backup["action"]} - {backup["triggered_by"] or ""}'
+    ).font = normal_font
+
+    ws.cell(row=summary_start + 2, column=1, value="Total Students:").font = bold_font
+    ws.cell(row=summary_start + 2, column=2, value=len(snapshot)).font = normal_font
+
+    ws.cell(row=summary_start + 3, column=1, value="Total Fees:").font = bold_font
+    ws.cell(row=summary_start + 3, column=2, value=round(total_fees, 2)).font = normal_font
+
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    safe_timestamp = (
+        backup["created_at"]
+        .replace(" ", "_")
+        .replace(":", "-")
+    )
+
+    filename = f"backup_{safe_timestamp}.xlsx"
+
+    return send_file(
+        output,
+        mimetype=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+        as_attachment=True,
+        download_name=filename
     )
 
 

@@ -78,7 +78,7 @@
             Settings
         </a>
 
-        <a href="#" class="nav-item">
+        <a href="#" class="nav-item" onclick="showPage('backup', this); return false;">
             <span>💾</span>
             Backup
         </a>
@@ -561,6 +561,44 @@
 
         </div>
 
+
+        <!-- ================= BACKUP PAGE ================= -->
+
+        <div id="backupPage" style="display: none;">
+
+            <section class="section-card">
+
+                <div class="section-header">
+
+                    <div>
+                        <h2>Backup History</h2>
+                        <p>A snapshot is saved automatically every time a student is added or removed. Backups older than 90 days are removed automatically.</p>
+                    </div>
+
+                </div>
+
+                <div class="report-form" style="max-width: 100%; display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end;">
+
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>From Date</label>
+                        <input type="date" id="backupFromDate" oninput="loadBackups()">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>To Date</label>
+                        <input type="date" id="backupToDate" oninput="loadBackups()">
+                    </div>
+
+                </div>
+
+                <div id="backupsList" class="students-list">
+                    <!-- Backup rows rendered by JavaScript -->
+                </div>
+
+            </section>
+
+        </div>
+
     </main>
 
 
@@ -944,6 +982,9 @@
             const settingsPage =
                 document.getElementById("settingsPage");
 
+            const backupPage =
+                document.getElementById("backupPage");
+
             const title =
                 document.getElementById("pageTitle");
 
@@ -955,6 +996,7 @@
             studentsPage.style.display = "none";
             reportsPage.style.display = "none";
             settingsPage.style.display = "none";
+            backupPage.style.display = "none";
 
 
             if (page === "students") {
@@ -983,6 +1025,15 @@
                 subtitle.textContent = "Account and admin management";
 
                 loadAdmins();
+
+            } else if (page === "backup") {
+
+                backupPage.style.display = "block";
+
+                title.textContent = "Backup";
+                subtitle.textContent = "Automatic snapshots of your student data";
+
+                loadBackups();
 
             } else {
 
@@ -1539,6 +1590,115 @@
                 alert("Could not reach the server. Please try again.");
 
             }
+
+        }
+
+
+        /* ================================================
+           BACKUP PAGE: LOAD & RENDER
+        ================================================= */
+
+        async function loadBackups() {
+
+            const list =
+                document.getElementById("backupsList");
+
+            const fromDate =
+                document.getElementById("backupFromDate").value;
+
+            const toDate =
+                document.getElementById("backupToDate").value;
+
+
+            const params = new URLSearchParams();
+
+            if (fromDate) {
+                params.set("from", fromDate);
+            }
+
+            if (toDate) {
+                params.set("to", toDate);
+            }
+
+
+            list.innerHTML =
+                `<div class="students-empty">Loading backups...</div>`;
+
+            try {
+
+                const response =
+                    await fetch(`/api/backups?${params.toString()}`);
+
+                if (!response.ok) {
+                    throw new Error("Failed to load backups");
+                }
+
+                const backups =
+                    await response.json();
+
+                list.innerHTML =
+                    backups.length
+                        ? backups.map(backupRowHTML).join("")
+                        : `<div class="students-empty">No backups found for this range.</div>`;
+
+            } catch (error) {
+
+                console.error("Could not load backups:", error);
+
+                list.innerHTML =
+                    `<div class="students-empty">Could not load backup history.</div>`;
+
+            }
+
+        }
+
+
+        function backupRowHTML(backup) {
+
+            const actionLabel =
+                backup.action === "add"
+                    ? "Student Added"
+                    : "Student Removed";
+
+            const actionClass =
+                backup.action === "add"
+                    ? "active-badge"
+                    : "expired-badge";
+
+            return `
+                <div class="student-row" style="cursor:default;">
+
+                    <div class="student-row-main">
+                        <span class="student-row-name">
+                            ${actionLabel}
+                            <span class="status-badge ${actionClass}">
+                                ${backup.triggeredBy || ""}
+                            </span>
+                        </span>
+                        <span class="student-row-meta">
+                            ${backup.createdAt} · ${backup.studentCount} students at this moment
+                        </span>
+                    </div>
+
+                    <button class="cancel-btn" style="padding:8px 12px; font-size:12px;"
+                            onclick="downloadBackup(${backup.id})">
+                        ⬇ Download
+                    </button>
+
+                </div>
+            `;
+
+        }
+
+
+        /* ================================================
+           BACKUP PAGE: DOWNLOAD
+        ================================================= */
+
+        function downloadBackup(id) {
+
+            window.location.href =
+                `/api/backups/${id}/download`;
 
         }
 
