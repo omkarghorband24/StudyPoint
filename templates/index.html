@@ -73,7 +73,7 @@
             SYSTEM
         </div>
 
-        <a href="#" class="nav-item">
+        <a href="#" class="nav-item" onclick="showPage('settings', this); return false;">
             <span>⚙️</span>
             Settings
         </a>
@@ -475,6 +475,92 @@
 
         </div>
 
+
+        <!-- ================= SETTINGS PAGE ================= -->
+
+        <div id="settingsPage" style="display: none;">
+
+            <section class="section-card">
+
+                <div class="section-header">
+
+                    <div>
+                        <h2>My Account</h2>
+                        <p>Change your own login password</p>
+                    </div>
+
+                </div>
+
+                <div class="report-form">
+
+                    <p id="changePasswordError" class="login-error-inline" style="display:none;"></p>
+                    <p id="changePasswordSuccess" class="success-text-inline" style="display:none;"></p>
+
+                    <div class="form-group">
+                        <label>Current Password</label>
+                        <input type="password" id="currentPassword">
+                    </div>
+
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" id="newPassword">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Confirm New Password</label>
+                        <input type="password" id="confirmNewPassword">
+                    </div>
+
+                    <button class="add-student-btn" onclick="submitChangePassword()">
+                        Change Password
+                    </button>
+
+                </div>
+
+            </section>
+
+            <section class="section-card">
+
+                <div class="section-header">
+
+                    <div>
+                        <h2>Manage Admins</h2>
+                        <p>Add new admins, or reset a password if someone forgot theirs</p>
+                    </div>
+
+                </div>
+
+                <div id="adminsList" class="students-list">
+                    <!-- Admin rows rendered by JavaScript -->
+                </div>
+
+                <div class="report-form" style="border-top: 1px solid var(--border); margin-top: 4px; padding-top: 24px;">
+
+                    <h3 style="font-size:14px; margin-bottom:14px;">Add New Admin</h3>
+
+                    <p id="addAdminError" class="login-error-inline" style="display:none;"></p>
+                    <p id="addAdminSuccess" class="success-text-inline" style="display:none;"></p>
+
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="newAdminUsername">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="newAdminPassword">
+                    </div>
+
+                    <button class="add-student-btn" onclick="submitAddAdmin()">
+                        + Add Admin
+                    </button>
+
+                </div>
+
+            </section>
+
+        </div>
+
     </main>
 
 
@@ -855,6 +941,9 @@
             const reportsPage =
                 document.getElementById("reportsPage");
 
+            const settingsPage =
+                document.getElementById("settingsPage");
+
             const title =
                 document.getElementById("pageTitle");
 
@@ -865,6 +954,7 @@
             dashboardPage.style.display = "none";
             studentsPage.style.display = "none";
             reportsPage.style.display = "none";
+            settingsPage.style.display = "none";
 
 
             if (page === "students") {
@@ -884,6 +974,15 @@
                 subtitle.textContent = "Export student data";
 
                 updateReportPreview();
+
+            } else if (page === "settings") {
+
+                settingsPage.style.display = "block";
+
+                title.textContent = "Settings";
+                subtitle.textContent = "Account and admin management";
+
+                loadAdmins();
 
             } else {
 
@@ -1079,6 +1178,367 @@
 
             window.location.href =
                 `/api/reports/export?${params.toString()}`;
+
+        }
+
+
+        /* ================================================
+           SETTINGS: LOAD & RENDER ADMINS
+        ================================================= */
+
+        async function loadAdmins() {
+
+            const list =
+                document.getElementById("adminsList");
+
+            try {
+
+                const response =
+                    await fetch("/api/admins");
+
+                if (!response.ok) {
+                    throw new Error("Failed to load admins");
+                }
+
+                const admins =
+                    await response.json();
+
+                list.innerHTML =
+                    admins.map(adminRowHTML).join("");
+
+            } catch (error) {
+
+                console.error("Could not load admins:", error);
+
+                list.innerHTML =
+                    `<div class="students-empty">Could not load admin list.</div>`;
+
+            }
+
+        }
+
+
+        function adminRowHTML(admin) {
+
+            return `
+                <div class="student-row" style="cursor:default;">
+
+                    <div class="student-row-main">
+                        <span class="student-row-name">
+                            ${admin.username}
+                            ${admin.isYou ? '<span class="status-badge active-badge">You</span>' : ""}
+                        </span>
+                        <span class="student-row-meta">Added ${formatDate(admin.createdAt.split(" ")[0])}</span>
+                    </div>
+
+                    <div style="display:flex; gap:8px;">
+
+                        <button class="cancel-btn" style="padding:8px 12px; font-size:12px;"
+                                onclick="resetAdminPassword(${admin.id}, '${admin.username}')">
+                            Reset Password
+                        </button>
+
+                        ${
+                            admin.isYou
+                            ? ""
+                            : `
+                            <button class="cancel-btn" style="padding:8px 12px; font-size:12px; color: var(--danger); border-color: var(--danger-light);"
+                                    onclick="removeAdmin(${admin.id}, '${admin.username}')">
+                                Remove
+                            </button>
+                            `
+                        }
+
+                    </div>
+
+                </div>
+            `;
+
+        }
+
+
+        /* ================================================
+           SETTINGS: CHANGE MY OWN PASSWORD
+        ================================================= */
+
+        async function submitChangePassword() {
+
+            const errorEl =
+                document.getElementById("changePasswordError");
+
+            const successEl =
+                document.getElementById("changePasswordSuccess");
+
+            errorEl.style.display = "none";
+            successEl.style.display = "none";
+
+
+            const currentPassword =
+                document.getElementById("currentPassword").value;
+
+            const newPassword =
+                document.getElementById("newPassword").value;
+
+            const confirmNewPassword =
+                document.getElementById("confirmNewPassword").value;
+
+
+            if (!currentPassword || !newPassword || !confirmNewPassword) {
+
+                errorEl.textContent = "Please fill in all fields.";
+                errorEl.style.display = "block";
+                return;
+
+            }
+
+            if (newPassword.length < 6) {
+
+                errorEl.textContent = "New password must be at least 6 characters.";
+                errorEl.style.display = "block";
+                return;
+
+            }
+
+            if (newPassword !== confirmNewPassword) {
+
+                errorEl.textContent = "New password and confirmation do not match.";
+                errorEl.style.display = "block";
+                return;
+
+            }
+
+
+            try {
+
+                const response =
+                    await fetch("/api/change-password", {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            currentPassword: currentPassword,
+                            newPassword: newPassword
+                        })
+
+                    });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+
+                    errorEl.textContent = result.message || "Could not change password.";
+                    errorEl.style.display = "block";
+                    return;
+
+                }
+
+                successEl.textContent = "Password changed successfully.";
+                successEl.style.display = "block";
+
+                document.getElementById("currentPassword").value = "";
+                document.getElementById("newPassword").value = "";
+                document.getElementById("confirmNewPassword").value = "";
+
+            } catch (error) {
+
+                console.error("Could not change password:", error);
+
+                errorEl.textContent = "Could not reach the server. Please try again.";
+                errorEl.style.display = "block";
+
+            }
+
+        }
+
+
+        /* ================================================
+           SETTINGS: ADD NEW ADMIN
+        ================================================= */
+
+        async function submitAddAdmin() {
+
+            const errorEl =
+                document.getElementById("addAdminError");
+
+            const successEl =
+                document.getElementById("addAdminSuccess");
+
+            errorEl.style.display = "none";
+            successEl.style.display = "none";
+
+
+            const username =
+                document.getElementById("newAdminUsername").value.trim();
+
+            const password =
+                document.getElementById("newAdminPassword").value;
+
+
+            if (!username || !password) {
+
+                errorEl.textContent = "Please fill in both fields.";
+                errorEl.style.display = "block";
+                return;
+
+            }
+
+            if (password.length < 6) {
+
+                errorEl.textContent = "Password must be at least 6 characters.";
+                errorEl.style.display = "block";
+                return;
+
+            }
+
+
+            try {
+
+                const response =
+                    await fetch("/api/admins", {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            username: username,
+                            password: password
+                        })
+
+                    });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+
+                    errorEl.textContent = result.message || "Could not add admin.";
+                    errorEl.style.display = "block";
+                    return;
+
+                }
+
+                successEl.textContent = "Admin added successfully.";
+                successEl.style.display = "block";
+
+                document.getElementById("newAdminUsername").value = "";
+                document.getElementById("newAdminPassword").value = "";
+
+                loadAdmins();
+
+            } catch (error) {
+
+                console.error("Could not add admin:", error);
+
+                errorEl.textContent = "Could not reach the server. Please try again.";
+                errorEl.style.display = "block";
+
+            }
+
+        }
+
+
+        /* ================================================
+           SETTINGS: RESET ANOTHER ADMIN'S PASSWORD
+           (useful when someone forgot their password)
+        ================================================= */
+
+        async function resetAdminPassword(id, username) {
+
+            const newPassword =
+                prompt(`Set a new password for "${username}" (at least 6 characters):`);
+
+            if (!newPassword) {
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                alert("Password must be at least 6 characters.");
+                return;
+            }
+
+
+            try {
+
+                const response =
+                    await fetch(`/api/admins/${id}/reset-password`, {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            newPassword: newPassword
+                        })
+
+                    });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+
+                    alert(result.message || "Could not reset password.");
+                    return;
+
+                }
+
+                alert(`Password for "${username}" has been reset.`);
+
+            } catch (error) {
+
+                console.error("Could not reset password:", error);
+                alert("Could not reach the server. Please try again.");
+
+            }
+
+        }
+
+
+        /* ================================================
+           SETTINGS: REMOVE AN ADMIN
+        ================================================= */
+
+        async function removeAdmin(id, username) {
+
+            const confirmRemove =
+                confirm(`Remove admin "${username}"? This cannot be undone.`);
+
+            if (!confirmRemove) {
+                return;
+            }
+
+
+            try {
+
+                const response =
+                    await fetch(`/api/admins/${id}`, {
+                        method: "DELETE"
+                    });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+
+                    alert(result.message || "Could not remove admin.");
+                    return;
+
+                }
+
+                loadAdmins();
+
+            } catch (error) {
+
+                console.error("Could not remove admin:", error);
+                alert("Could not reach the server. Please try again.");
+
+            }
 
         }
 

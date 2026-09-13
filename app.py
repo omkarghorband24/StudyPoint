@@ -325,6 +325,313 @@ def logout():
 
 
 # =====================================================
+# ADMIN MANAGEMENT
+# =====================================================
+
+@app.route("/api/admins", methods=["GET"])
+@login_required
+def get_admins():
+
+    conn = get_db()
+
+    try:
+
+        admins = conn.execute("""
+            SELECT id, username, created_at
+            FROM admins
+            ORDER BY id ASC
+        """).fetchall()
+
+    finally:
+
+        conn.close()
+
+
+    result = []
+
+    for admin in admins:
+
+        result.append({
+            "id": admin["id"],
+            "username": admin["username"],
+            "createdAt": admin["created_at"],
+            "isYou": admin["id"] == session.get("admin_id")
+        })
+
+    return jsonify(result)
+
+
+@app.route("/api/admins", methods=["POST"])
+@login_required
+def add_admin():
+
+    data = request.get_json(silent=True)
+
+    if data is None:
+        return jsonify({
+            "success": False,
+            "message": "Invalid or missing JSON data."
+        }), 400
+
+    username = str(data.get("username", "") or "").strip()
+    password = str(data.get("password", "") or "")
+
+
+    if not username:
+        return jsonify({
+            "success": False,
+            "message": "Username is required."
+        }), 400
+
+    if len(password) < 6:
+        return jsonify({
+            "success": False,
+            "message": "Password must be at least 6 characters."
+        }), 400
+
+
+    conn = get_db()
+
+    try:
+
+        existing = conn.execute("""
+            SELECT id FROM admins WHERE username = ?
+        """, (username,)).fetchone()
+
+        if existing:
+            return jsonify({
+                "success": False,
+                "message": "This username is already taken."
+            }), 409
+
+
+        created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        conn.execute("""
+            INSERT INTO admins (username, password_hash, created_at)
+            VALUES (?, ?, ?)
+        """, (
+            username,
+            generate_password_hash(password),
+            created_at
+        ))
+
+        conn.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Admin added successfully."
+        })
+
+    except Exception as e:
+
+        print("Error adding admin:", e)
+
+        return jsonify({
+            "success": False,
+            "message": "Something went wrong while adding the admin."
+        }), 500
+
+    finally:
+
+        conn.close()
+
+
+@app.route("/api/admins/<int:admin_id>", methods=["DELETE"])
+@login_required
+def delete_admin(admin_id):
+
+    conn = get_db()
+
+    try:
+
+        total = conn.execute("""
+            SELECT COUNT(*) AS count FROM admins
+        """).fetchone()["count"]
+
+        if total <= 1:
+            return jsonify({
+                "success": False,
+                "message": "Cannot delete the last remaining admin."
+            }), 400
+
+
+        if admin_id == session.get("admin_id"):
+            return jsonify({
+                "success": False,
+                "message": "You cannot delete your own account while logged in."
+            }), 400
+
+
+        admin = conn.execute("""
+            SELECT id FROM admins WHERE id = ?
+        """, (admin_id,)).fetchone()
+
+        if not admin:
+            return jsonify({
+                "success": False,
+                "message": "Admin not found."
+            }), 404
+
+
+        conn.execute("""
+            DELETE FROM admins WHERE id = ?
+        """, (admin_id,))
+
+        conn.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Admin removed successfully."
+        })
+
+    except Exception as e:
+
+        print("Error deleting admin:", e)
+
+        return jsonify({
+            "success": False,
+            "message": "Something went wrong while removing the admin."
+        }), 500
+
+    finally:
+
+        conn.close()
+
+
+@app.route("/api/change-password", methods=["POST"])
+@login_required
+def change_password():
+
+    data = request.get_json(silent=True)
+
+    if data is None:
+        return jsonify({
+            "success": False,
+            "message": "Invalid or missing JSON data."
+        }), 400
+
+    current_password = str(data.get("currentPassword", "") or "")
+    new_password = str(data.get("newPassword", "") or "")
+
+
+    if len(new_password) < 6:
+        return jsonify({
+            "success": False,
+            "message": "New password must be at least 6 characters."
+        }), 400
+
+
+    conn = get_db()
+
+    try:
+
+        admin = conn.execute("""
+            SELECT id, password_hash FROM admins WHERE id = ?
+        """, (session.get("admin_id"),)).fetchone()
+
+        if not admin or not check_password_hash(admin["password_hash"], current_password):
+
+            return jsonify({
+                "success": False,
+                "message": "Current password is incorrect."
+            }), 400
+
+
+        conn.execute("""
+            UPDATE admins SET password_hash = ? WHERE id = ?
+        """, (
+            generate_password_hash(new_password),
+            session.get("admin_id")
+        ))
+
+        conn.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Password changed successfully."
+        })
+
+    except Exception as e:
+
+        print("Error changing password:", e)
+
+        return jsonify({
+            "success": False,
+            "message": "Something went wrong while changing the password."
+        }), 500
+
+    finally:
+
+        conn.close()
+
+
+@app.route("/api/admins/<int:admin_id>/reset-password", methods=["POST"])
+@login_required
+def reset_admin_password(admin_id):
+
+    data = request.get_json(silent=True)
+
+    if data is None:
+        return jsonify({
+            "success": False,
+            "message": "Invalid or missing JSON data."
+        }), 400
+
+    new_password = str(data.get("newPassword", "") or "")
+
+
+    if len(new_password) < 6:
+        return jsonify({
+            "success": False,
+            "message": "New password must be at least 6 characters."
+        }), 400
+
+
+    conn = get_db()
+
+    try:
+
+        admin = conn.execute("""
+            SELECT id FROM admins WHERE id = ?
+        """, (admin_id,)).fetchone()
+
+        if not admin:
+            return jsonify({
+                "success": False,
+                "message": "Admin not found."
+            }), 404
+
+
+        conn.execute("""
+            UPDATE admins SET password_hash = ? WHERE id = ?
+        """, (
+            generate_password_hash(new_password),
+            admin_id
+        ))
+
+        conn.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Password reset successfully."
+        })
+
+    except Exception as e:
+
+        print("Error resetting password:", e)
+
+        return jsonify({
+            "success": False,
+            "message": "Something went wrong while resetting the password."
+        }), 500
+
+    finally:
+
+        conn.close()
+
+
+# =====================================================
 # HOME PAGE
 # =====================================================
 

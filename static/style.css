@@ -1532,3 +1532,26 @@ body {
     color: var(--text-light);
     margin: 4px 0 20px;
 }
+
+
+/* =====================================================
+   SETTINGS PAGE
+===================================================== */
+
+.login-error-inline {
+    background: var(--danger-light);
+    color: var(--danger);
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.success-text-inline {
+    background: var(--success-light);
+    color: var(--success);
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}

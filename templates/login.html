@@ -11,47 +11,110 @@
 
     <style>
 
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
         body.login-body {
+            margin: 0;
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+            min-height: 100dvh;
             background: var(--background);
+            padding: 20px;
         }
 
-        .login-card {
+        .login-shell {
             width: 100%;
-            max-width: 380px;
+            max-width: 780px;
+
+            display: flex;
+
             background: #ffffff;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 36px 32px;
-            box-shadow: 0 4px 20px rgba(17, 24, 39, 0.06);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(17, 24, 39, 0.10);
         }
 
-        .login-brand {
+        /* ---------- LEFT BRAND PANEL ---------- */
+
+        .login-brand-panel {
+            flex: 1;
+            padding: 44px 36px;
+
+            background: linear-gradient(160deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: #ffffff;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .login-brand-mark {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+        .login-brand-mark span {
+            opacity: 0.85;
+        }
+
+        .login-brand-body h1 {
+            font-size: 26px;
+            line-height: 1.35;
+            margin: 0 0 12px;
+        }
+
+        .login-brand-body p {
+            font-size: 14px;
+            line-height: 1.6;
+            opacity: 0.85;
+            margin: 0;
+            max-width: 260px;
+        }
+
+        .login-brand-footnote {
+            font-size: 12px;
+            opacity: 0.65;
+        }
+
+        /* ---------- RIGHT FORM PANEL ---------- */
+
+        .login-form-panel {
+            flex: 1;
+            padding: 44px 40px;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-heading {
             font-size: 20px;
             font-weight: 700;
             color: var(--dark);
             margin-bottom: 4px;
         }
 
-        .login-brand span {
-            color: var(--primary);
-        }
-
         .login-subtitle {
             color: var(--text-light);
             font-size: 13px;
-            margin-bottom: 28px;
+            margin-bottom: 26px;
         }
 
         .login-error {
             background: var(--danger-light);
             color: var(--danger);
             font-size: 13px;
-            padding: 10px 12px;
-            border-radius: 8px;
+            padding: 11px 14px;
+            border-radius: 10px;
             margin-bottom: 18px;
         }
 
@@ -67,76 +130,230 @@
             margin-bottom: 6px;
         }
 
+        .login-input-wrap {
+            position: relative;
+        }
+
         .login-field input {
             width: 100%;
-            padding: 11px 12px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 14px;
+            padding: 13px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 15px;
             font-family: inherit;
+            background: #fafbfc;
+            transition: 0.15s;
         }
 
         .login-field input:focus {
             outline: none;
             border-color: var(--primary);
+            background: #ffffff;
+        }
+
+        .login-toggle-password {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+
+            background: none;
+            border: none;
+            cursor: pointer;
+
+            font-size: 13px;
+            color: var(--text-light);
+            font-weight: 600;
+            padding: 8px 10px;
         }
 
         .login-btn {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background: var(--primary);
             color: #ffffff;
             border: none;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 10px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            margin-top: 6px;
+            margin-top: 8px;
+            transition: 0.15s;
         }
 
         .login-btn:hover {
             background: var(--primary-dark);
         }
 
+        .login-btn:active {
+            transform: scale(0.99);
+        }
+
+        .login-help {
+            text-align: center;
+            font-size: 12.5px;
+            color: var(--text-light);
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+
+        /* ---------- MOBILE ---------- */
+
+        @media (max-width: 680px) {
+
+            body.login-body {
+                padding: 0;
+                align-items: stretch;
+            }
+
+            .login-shell {
+                flex-direction: column;
+                max-width: 100%;
+                border-radius: 0;
+                min-height: 100vh;
+                min-height: 100dvh;
+                box-shadow: none;
+            }
+
+            .login-brand-panel {
+                flex: none;
+                padding: 28px 24px;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .login-brand-body {
+                display: none;
+            }
+
+            .login-brand-footnote {
+                display: none;
+            }
+
+            .login-form-panel {
+                flex: 1;
+                padding: 32px 22px;
+                justify-content: flex-start;
+                padding-top: 44px;
+            }
+
+            .login-heading {
+                font-size: 19px;
+            }
+
+        }
+
+        @media (max-width: 340px) {
+
+            .login-form-panel {
+                padding-left: 18px;
+                padding-right: 18px;
+            }
+
+        }
+
     </style>
 </head>
 <body class="login-body">
 
-    <div class="login-card">
+    <div class="login-shell">
 
-        <div class="login-brand">
-            JIJAU <span>ABHYASIKA</span>
-        </div>
+        <div class="login-brand-panel">
 
-        <div class="login-subtitle">
-            Study Point Management System
-        </div>
-
-        {% if error %}
-        <div class="login-error">
-            {{ error }}
-        </div>
-        {% endif %}
-
-        <form method="POST" action="{{ url_for('login') }}">
-
-            <div class="login-field">
-                <label>Username</label>
-                <input type="text" name="username" required autofocus>
+            <div class="login-brand-mark">
+                JIJAU <span>ABHYASIKA</span>
             </div>
 
-            <div class="login-field">
-                <label>Password</label>
-                <input type="password" name="password" required>
+            <div class="login-brand-body">
+                <h1>Study Point<br>Management System</h1>
+                <p>
+                    Manage seats, students, fees and
+                    reports for your study point — all
+                    in one place.
+                </p>
             </div>
 
-            <button type="submit" class="login-btn">
-                Log In
-            </button>
+            <div class="login-brand-footnote">
+                Admins only
+            </div>
 
-        </form>
+        </div>
+
+        <div class="login-form-panel">
+
+            <div class="login-heading">
+                Welcome back
+            </div>
+
+            <div class="login-subtitle">
+                Log in to continue to your dashboard
+            </div>
+
+            {% if error %}
+            <div class="login-error">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('login') }}">
+
+                <div class="login-field">
+                    <label>Username</label>
+                    <input type="text" name="username" required autofocus autocomplete="username">
+                </div>
+
+                <div class="login-field">
+                    <label>Password</label>
+                    <div class="login-input-wrap">
+                        <input type="password" name="password" id="passwordInput" required autocomplete="current-password">
+                        <button type="button" class="login-toggle-password" onclick="togglePassword()">
+                            SHOW
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="login-btn">
+                    Log In
+                </button>
+
+            </form>
+
+            <div class="login-help">
+                Forgot your password? Ask another
+                admin to reset it for you from
+                Settings → Manage Admins.
+            </div>
+
+        </div>
 
     </div>
+
+    <script>
+
+        function togglePassword() {
+
+            const input =
+                document.getElementById("passwordInput");
+
+            const btn =
+                document.querySelector(".login-toggle-password");
+
+            if (input.type === "password") {
+
+                input.type = "text";
+                btn.textContent = "HIDE";
+
+            } else {
+
+                input.type = "password";
+                btn.textContent = "SHOW";
+
+            }
+
+        }
+
+    </script>
 
 </body>
 </html>
