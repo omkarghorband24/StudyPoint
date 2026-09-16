@@ -8,9 +8,123 @@
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-mark {
+            width: 30px;
+            height: 30px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 900;
+            box-shadow: 0 6px 16px rgba(37, 99, 235, .25);
+        }
+
+        .logo-main {
+            font-weight: 850;
+            letter-spacing: .6px;
+        }
+
+        .logo-sub {
+            color: #93c5fd !important;
+            font-weight: 600 !important;
+            margin-left: -4px;
+        }
+
+        .page-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 8px;
+            color: #64748b;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 1.4px;
+        }
+
+        .page-eyebrow::before {
+            content: "";
+            width: 22px;
+            height: 2px;
+            margin-right: 8px;
+            border-radius: 99px;
+            background: #2563eb;
+        }
+
+        .stat-info p {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .stat-label {
+            display: inline-block !important;
+            margin: 0 !important;
+            padding: 3px 6px;
+            border-radius: 999px;
+            background: #f1f5f9;
+            color: #64748b !important;
+            font-size: 7px !important;
+            line-height: 1 !important;
+            letter-spacing: .5px;
+        }
+
+        .section-header h2 {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .section-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 0 5px rgba(37,99,235,.07);
+        }
+
+        .general-dot {
+            background: #2563eb;
+        }
+
+        .vip-dot {
+            background: #7c3aed;
+            box-shadow: 0 0 0 5px rgba(124,58,237,.08);
+        }
+
+        .vvip-dot {
+            background: #db2777;
+            box-shadow: 0 0 0 5px rgba(219,39,119,.08);
+        }
+
+        @media (max-width: 768px) {
+            .logo-mark {
+                width: 27px;
+                height: 27px;
+            }
+
+            .logo-sub {
+                display: none;
+            }
+
+            .page-eyebrow {
+                font-size: 8px;
+            }
+        }
+    </style>
+
 </head>
 
-<body>
+<body class="premium-dashboard">
 
     <!-- ================= HEADER ================= -->
 
@@ -23,7 +137,9 @@
             </button>
 
             <div class="logo">
-                JIJAU <span>ABHYASIKA</span>
+                <span class="logo-mark">J</span>
+                <span class="logo-main">JIJAU</span>
+                <span class="logo-sub">ABHYASIKA</span>
             </div>
 
         </div>
