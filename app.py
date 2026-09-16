@@ -1026,6 +1026,24 @@ def add_student():
 
 
         # -------------------------------------------------
+        # CLEAN UP OLD EXPIRED RECORD(S) FOR THIS SAME SEAT
+        # (full history is still safe in automatic backups,
+        # this just keeps the live Students list clean)
+        # -------------------------------------------------
+
+        conn.execute("""
+            DELETE FROM students
+            WHERE section = ?
+            AND set_number = ?
+            AND expiry_date < ?
+        """, (
+            section,
+            set_number,
+            datetime.now().strftime("%Y-%m-%d")
+        ))
+
+
+        # -------------------------------------------------
         # INSERT STUDENT
         # -------------------------------------------------
 
