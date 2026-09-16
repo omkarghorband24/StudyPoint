@@ -1586,3 +1586,15 @@ body {
         padding-right: 10px;
     }
 }
+
+@media (max-width: 768px) {
+    .logo-sub {
+        display: inline !important;
+    }
+
+    .logo {
+        gap: 5px;
+        font-size: 15px;
+        white-space: nowrap;
+    }
+}
