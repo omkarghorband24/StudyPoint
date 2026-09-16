@@ -1684,10 +1684,19 @@
                         </span>
                     </div>
 
-                    <button class="cancel-btn" style="padding:8px 12px; font-size:12px;"
-                            onclick="downloadBackup(${backup.id})">
-                        ⬇ Download
-                    </button>
+                    <div style="display:flex; gap:8px;">
+
+                        <button class="cancel-btn" style="padding:8px 12px; font-size:12px;"
+                                onclick="downloadBackup(${backup.id})">
+                            ⬇ Download
+                        </button>
+
+                        <button class="cancel-btn" style="padding:8px 12px; font-size:12px; color: var(--danger); border-color: var(--danger-light);"
+                                onclick="removeBackup(${backup.id})">
+                            Remove
+                        </button>
+
+                    </div>
 
                 </div>
             `;
@@ -1703,6 +1712,47 @@
 
             window.location.href =
                 `/api/backups/${id}/download`;
+
+        }
+
+
+        /* ================================================
+           BACKUP PAGE: REMOVE A SINGLE BACKUP
+        ================================================= */
+
+        async function removeBackup(id) {
+
+            const confirmRemove =
+                confirm("Remove this backup snapshot? This cannot be undone.");
+
+            if (!confirmRemove) {
+                return;
+            }
+
+            try {
+
+                const response =
+                    await fetch(`/api/backups/${id}`, {
+                        method: "DELETE"
+                    });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+
+                    alert(result.message || "Could not remove backup.");
+                    return;
+
+                }
+
+                loadBackups();
+
+            } catch (error) {
+
+                console.error("Could not remove backup:", error);
+                alert("Could not reach the server. Please try again.");
+
+            }
 
         }
 

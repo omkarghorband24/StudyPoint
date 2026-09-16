@@ -1727,6 +1727,55 @@ def get_backups():
 
 
 # =====================================================
+# DELETE A BACKUP
+# =====================================================
+
+@app.route("/api/backups/<int:backup_id>", methods=["DELETE"])
+@login_required
+def delete_backup(backup_id):
+
+    conn = get_db()
+
+    try:
+
+        backup = conn.execute("""
+            SELECT id FROM backups WHERE id = ?
+        """, (backup_id,)).fetchone()
+
+        if not backup:
+
+            return jsonify({
+                "success": False,
+                "message": "Backup not found."
+            }), 404
+
+
+        conn.execute("""
+            DELETE FROM backups WHERE id = ?
+        """, (backup_id,))
+
+        conn.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Backup removed successfully."
+        })
+
+    except Exception as e:
+
+        print("Error deleting backup:", e)
+
+        return jsonify({
+            "success": False,
+            "message": "Something went wrong while removing the backup."
+        }), 500
+
+    finally:
+
+        conn.close()
+
+
+# =====================================================
 # DOWNLOAD A BACKUP (EXCEL)
 # =====================================================
 
