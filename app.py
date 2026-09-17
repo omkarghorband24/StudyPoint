@@ -264,6 +264,50 @@ def init_database():
         conn.commit()
 
 
+        # -------------------------------------------------
+        # UNRESERVED STUDENTS TABLE
+        # (completely separate from the main students table
+        # - no set number, not seat-bound, not included in
+        # dashboard/reports/backups)
+        # -------------------------------------------------
+
+        if USE_POSTGRES:
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS unreserved_students (
+                    id SERIAL PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    mobile TEXT NOT NULL,
+                    section TEXT NOT NULL,
+                    joining_date TEXT NOT NULL,
+                    expiry_date TEXT NOT NULL,
+                    fees REAL NOT NULL,
+                    payment_mode TEXT NOT NULL,
+                    notes TEXT,
+                    created_at TEXT NOT NULL
+                )
+            """)
+
+        else:
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS unreserved_students (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    mobile TEXT NOT NULL,
+                    section TEXT NOT NULL,
+                    joining_date TEXT NOT NULL,
+                    expiry_date TEXT NOT NULL,
+                    fees REAL NOT NULL,
+                    payment_mode TEXT NOT NULL,
+                    notes TEXT,
+                    created_at TEXT NOT NULL
+                )
+            """)
+
+        conn.commit()
+
+
         print("Database initialized successfully.")
 
         if USE_POSTGRES:
@@ -2101,6 +2145,233 @@ def bulk_download_backups():
         as_attachment=True,
         download_name=filename
     )
+
+
+# =====================================================
+# UNRESERVED STUDENTS
+# (a fully separate list of students who are not tied
+# to a specific set number - they can sit anywhere.
+# This does not touch the main students table, dashboard,
+# reports, or backups in any way.)
+# =====================================================
+
+@app.route("/api/unreserved", methods=["GET"])
+@login_required
+def get_unreserved_students():
+
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    conn = get_db()
+
+    try:
+
+        rows = conn.execute("""
+            SELECT *
+            FROM unreserved_students
+            ORDER BY id DESC
+        """).fetchall()
+
+        result = []
+
+        for row in rows:
+
+            status = (
+                "expired"
+                if row["expiry_date"] < today
+                else "active"
+            )
+
+            result.append({
+                "id": row["id"],
+                "name": row["name"],
+                "mobile": row["mobile"],
+                "section": row["section"],
+                "joiningDate": row["joining_date"],
+                "expiryDate": row["expiry_date"],
+                "fees": row["fees"],
+                "paymentMode": row["payment_mode"],
+                "notes": row["notes"] or "",
+                "status": status
+            })
+
+        return jsonify(result)
+
+    except Exception as e:
+
+        print("Error listing unreserved students:", e)
+
+        return jsonify({
+            "success": False,
+            "message": "Unable to load unreserved students."
+        }), 500
+
+    finally:
+
+        conn.close()
+
+
+@app.route("/api/unreserved", methods=["POST"])
+@login_required
+def add_unreserved_student():
+
+    data = request.get_json(silent=True)
+
+    if data is None:
+        return jsonify({
+            "success": False,
+            "message": "Invalid or missing JSON data."
+        }), 400
+
+    name = str(data.get("name", "") or "").strip()
+    mobile = str(data.get("mobile", "") or "").strip()
+    section = str(data.get("section", "") or "").strip()
+    joining_date = str(data.get("joiningDate", "") or "").strip()
+    expiry_date = str(data.get("expiryDate", "") or "").strip()
+    fees = data.get("fees")
+    payment_mode = str(data.get("paymentMode", "") or "").strip()
+    notes = str(data.get("notes", "") or "").strip()
+
+
+    if not name:
+        return jsonify({
+            "success": False,
+            "message": "Name is required."
+        }), 400
+
+    if not mobile or not mobile.isdigit() or not (7 <= len(mobile) <= 15):
+        return jsonify({
+            "success": False,
+            "message": "Enter a valid mobile number (digits only)."
+        }), 400
+
+    if section not in ["General", "VIP", "VVIP"]:
+        return jsonify({
+            "success": False,
+            "message": "Invalid section."
+        }), 400
+
+    if not joining_date:
+        return jsonify({
+            "success": False,
+            "message": "Joining date is required."
+        }), 400
+
+    if not expiry_date:
+        return jsonify({
+            "success": False,
+            "message": "Expiry date is required."
+        }), 400
+
+    if fees is None or str(fees).strip() == "":
+        return jsonify({
+            "success": False,
+            "message": "Fees amount is required."
+        }), 400
+
+    try:
+        fees = float(fees)
+    except (TypeError, ValueError):
+        return jsonify({
+            "success": False,
+            "message": "Fees must be a valid number."
+        }), 400
+
+    if fees < 0:
+        return jsonify({
+            "success": False,
+            "message": "Fees cannot be negative."
+        }), 400
+
+    if not payment_mode:
+        return jsonify({
+            "success": False,
+            "message": "Payment mode is required."
+        }), 400
+
+
+    conn = get_db()
+
+    try:
+
+        created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        cursor = conn.execute("""
+            INSERT INTO unreserved_students (
+                name, mobile, section, joining_date,
+                expiry_date, fees, payment_mode, notes, created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            name, mobile, section, joining_date,
+            expiry_date, fees, payment_mode, notes, created_at
+        ))
+
+        conn.commit()
+
+        student_id = cursor.lastrowid
+
+        return jsonify({
+            "success": True,
+            "message": "Student added successfully.",
+            "id": student_id
+        })
+
+    except Exception as e:
+
+        print("Error adding unreserved student:", e)
+
+        return jsonify({
+            "success": False,
+            "message": "Something went wrong while saving the student."
+        }), 500
+
+    finally:
+
+        conn.close()
+
+
+@app.route("/api/unreserved/<int:student_id>", methods=["DELETE"])
+@login_required
+def delete_unreserved_student(student_id):
+
+    conn = get_db()
+
+    try:
+
+        student = conn.execute("""
+            SELECT id FROM unreserved_students WHERE id = ?
+        """, (student_id,)).fetchone()
+
+        if not student:
+            return jsonify({
+                "success": False,
+                "message": "Student not found."
+            }), 404
+
+
+        conn.execute("""
+            DELETE FROM unreserved_students WHERE id = ?
+        """, (student_id,))
+
+        conn.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Student removed successfully."
+        })
+
+    except Exception as e:
+
+        print("Error removing unreserved student:", e)
+
+        return jsonify({
+            "success": False,
+            "message": "Something went wrong while removing the student."
+        }), 500
+
+    finally:
+
+        conn.close()
 
 
 # =====================================================

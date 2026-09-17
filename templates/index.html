@@ -199,6 +199,11 @@
             Backup
         </a>
 
+        <a href="#" class="nav-item" onclick="showPage('unreserved', this); return false;">
+            <span>🪑</span>
+            Unreserved
+        </a>
+
     </aside>
 
 
@@ -216,6 +221,7 @@
             </div>
 
             <button class="add-student-btn"
+                    id="globalAddStudentBtn"
                     onclick="openStudentModal()">
                 + Add New Student
             </button>
@@ -719,6 +725,88 @@
 
         </div>
 
+
+        <!-- ================= UNRESERVED PAGE ================= -->
+
+        <div id="unreservedPage" style="display: none;">
+
+            <div style="display:flex; justify-content:flex-end; margin-bottom:16px;">
+                <button class="add-student-btn" onclick="openUnreservedModal()">
+                    + Add Unreserved Student
+                </button>
+            </div>
+
+            <section class="section-card">
+
+                <div class="section-header">
+
+                    <div>
+                        <h2>General Section</h2>
+                        <p>Unreserved General students</p>
+                    </div>
+
+                    <div class="section-summary">
+                        <span class="section-total" id="unreservedGeneralCount">
+                            0 Students
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="students-list" id="unreservedGeneralList">
+                    <!-- rendered by JavaScript -->
+                </div>
+
+            </section>
+
+            <section class="section-card">
+
+                <div class="section-header">
+
+                    <div>
+                        <h2>VIP Section</h2>
+                        <p>Unreserved VIP students</p>
+                    </div>
+
+                    <div class="section-summary">
+                        <span class="section-total vip" id="unreservedVipCount">
+                            0 Students
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="students-list" id="unreservedVipList">
+                    <!-- rendered by JavaScript -->
+                </div>
+
+            </section>
+
+            <section class="section-card">
+
+                <div class="section-header">
+
+                    <div>
+                        <h2>VVIP Section</h2>
+                        <p>Unreserved VVIP students</p>
+                    </div>
+
+                    <div class="section-summary">
+                        <span class="section-total vvip" id="unreservedVvipCount">
+                            0 Students
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="students-list" id="unreservedVvipList">
+                    <!-- rendered by JavaScript -->
+                </div>
+
+            </section>
+
+        </div>
+
     </main>
 
 
@@ -973,6 +1061,217 @@
 
 
     <!-- ================================================= -->
+    <!--          ADD UNRESERVED STUDENT MODAL             -->
+    <!-- ================================================= -->
+
+    <div class="modal-overlay"
+         id="unreservedModal">
+
+        <div class="modal">
+
+            <div class="modal-header">
+
+                <div>
+                    <h2>Add Unreserved Student</h2>
+                    <p>No fixed set - they can sit anywhere</p>
+                </div>
+
+                <button class="close-btn"
+                        onclick="closeUnreservedModal()">
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="unreservedForm"
+                  onsubmit="addUnreservedStudent(event)">
+
+                <div class="form-group">
+
+                    <label>
+                        Student Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="unreservedName"
+                        placeholder="Enter full name"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Mobile Number
+                    </label>
+
+                    <input
+                        type="tel"
+                        id="unreservedMobile"
+                        placeholder="Enter mobile number"
+                        maxlength="10"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Section
+                    </label>
+
+                    <select id="unreservedSection"
+                            required>
+
+                        <option value="">
+                            Select Section
+                        </option>
+
+                        <option value="General">
+                            General
+                        </option>
+
+                        <option value="VIP">
+                            VIP
+                        </option>
+
+                        <option value="VVIP">
+                            VVIP
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-row">
+
+                    <div class="form-group">
+
+                        <label>
+                            Joining Date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="unreservedJoiningDate"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Expiry Date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="unreservedExpiryDate"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-row">
+
+                    <div class="form-group">
+
+                        <label>
+                            Fees
+                        </label>
+
+                        <input
+                            type="number"
+                            id="unreservedFees"
+                            placeholder="₹ Enter fees"
+                            min="0"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            Payment Mode
+                        </label>
+
+                        <select id="unreservedPaymentMode"
+                                required>
+
+                            <option value="">
+                                Select Payment
+                            </option>
+
+                            <option value="Cash">
+                                Cash
+                            </option>
+
+                            <option value="UPI">
+                                UPI
+                            </option>
+
+                            <option value="Other">
+                                Other
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Notes
+                    </label>
+
+                    <textarea
+                        id="unreservedNotes"
+                        placeholder="Optional notes..."
+                        rows="3"></textarea>
+
+                </div>
+
+
+                <div class="modal-buttons">
+
+                    <button type="button"
+                            class="cancel-btn"
+                            onclick="closeUnreservedModal()">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                            class="save-btn">
+                        Save Student
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================= -->
     <!--                  SET INFORMATION MODAL            -->
     <!-- ================================================= -->
 
@@ -1105,6 +1404,9 @@
             const backupPage =
                 document.getElementById("backupPage");
 
+            const unreservedPage =
+                document.getElementById("unreservedPage");
+
             const title =
                 document.getElementById("pageTitle");
 
@@ -1117,6 +1419,9 @@
             reportsPage.style.display = "none";
             settingsPage.style.display = "none";
             backupPage.style.display = "none";
+            unreservedPage.style.display = "none";
+
+            document.getElementById("globalAddStudentBtn").style.display = "";
 
 
             if (page === "students") {
@@ -1154,6 +1459,17 @@
                 subtitle.textContent = "Automatic snapshots of your student data";
 
                 loadBackups();
+
+            } else if (page === "unreserved") {
+
+                unreservedPage.style.display = "block";
+
+                title.textContent = "Unreserved";
+                subtitle.textContent = "Students without a fixed set - they can sit anywhere";
+
+                document.getElementById("globalAddStudentBtn").style.display = "none";
+
+                loadUnreservedStudents();
 
             } else {
 
@@ -1907,6 +2223,286 @@
 
             window.location.href =
                 `/api/backups/bulk-download?${params.toString()}`;
+
+        }
+
+
+        /* ================================================
+           UNRESERVED STUDENTS: LOAD & RENDER
+           (completely independent - own array, own API,
+           never touches the main students list/backups)
+        ================================================= */
+
+        let unreservedStudents = [];
+
+        async function loadUnreservedStudents() {
+
+            try {
+
+                const response =
+                    await fetch("/api/unreserved");
+
+                if (!response.ok) {
+                    throw new Error("Failed to load unreserved students");
+                }
+
+                unreservedStudents = await response.json();
+
+            } catch (error) {
+
+                console.error("Could not load unreserved students:", error);
+
+                unreservedStudents = [];
+
+            }
+
+            renderUnreservedList();
+
+        }
+
+
+        function renderUnreservedList() {
+
+            const generalList =
+                document.getElementById("unreservedGeneralList");
+
+            const vipList =
+                document.getElementById("unreservedVipList");
+
+            const vvipList =
+                document.getElementById("unreservedVvipList");
+
+            const generalCount =
+                document.getElementById("unreservedGeneralCount");
+
+            const vipCount =
+                document.getElementById("unreservedVipCount");
+
+            const vvipCount =
+                document.getElementById("unreservedVvipCount");
+
+
+            const general =
+                unreservedStudents.filter(s => s.section === "General");
+
+            const vip =
+                unreservedStudents.filter(s => s.section === "VIP");
+
+            const vvip =
+                unreservedStudents.filter(s => s.section === "VVIP");
+
+
+            generalCount.textContent = `${general.length} Students`;
+            vipCount.textContent = `${vip.length} Students`;
+            vvipCount.textContent = `${vvip.length} Students`;
+
+
+            generalList.innerHTML =
+                general.length
+                    ? general.map(unreservedRowHTML).join("")
+                    : `<div class="students-empty">No unreserved students in General section yet.</div>`;
+
+            vipList.innerHTML =
+                vip.length
+                    ? vip.map(unreservedRowHTML).join("")
+                    : `<div class="students-empty">No unreserved students in VIP section yet.</div>`;
+
+            vvipList.innerHTML =
+                vvip.length
+                    ? vvip.map(unreservedRowHTML).join("")
+                    : `<div class="students-empty">No unreserved students in VVIP section yet.</div>`;
+
+        }
+
+
+        function unreservedRowHTML(student) {
+
+            const isExpired =
+                student.status === "expired";
+
+            return `
+                <div class="student-row" style="cursor:default;">
+
+                    <div class="student-row-main">
+                        <span class="student-row-name">
+                            ${student.name}
+                            <span class="status-badge ${isExpired ? "expired-badge" : "active-badge"}">
+                                ${isExpired ? "Expired" : "Active"}
+                            </span>
+                        </span>
+                        <span class="student-row-meta">
+                            ${student.mobile} · Expires ${formatDate(student.expiryDate)} · ₹${student.fees}
+                        </span>
+                    </div>
+
+                    <button class="cancel-btn" style="padding:8px 12px; font-size:12px; color: var(--danger); border-color: var(--danger-light);"
+                            onclick="removeUnreservedStudent(${student.id})">
+                        Remove
+                    </button>
+
+                </div>
+            `;
+
+        }
+
+
+        /* ================================================
+           UNRESERVED STUDENTS: MODAL OPEN/CLOSE
+        ================================================= */
+
+        function openUnreservedModal() {
+
+            document
+                .getElementById("unreservedForm")
+                .reset();
+
+            document
+                .getElementById("unreservedModal")
+                .classList.add("show");
+
+        }
+
+        function closeUnreservedModal() {
+
+            document
+                .getElementById("unreservedModal")
+                .classList.remove("show");
+
+        }
+
+
+        /* ================================================
+           UNRESERVED STUDENTS: ADD
+        ================================================= */
+
+        async function addUnreservedStudent(event) {
+
+            event.preventDefault();
+
+
+            const name =
+                document.getElementById("unreservedName").value.trim();
+
+            const mobile =
+                document.getElementById("unreservedMobile").value.trim();
+
+            const section =
+                document.getElementById("unreservedSection").value;
+
+            const joiningDate =
+                document.getElementById("unreservedJoiningDate").value;
+
+            const expiryDate =
+                document.getElementById("unreservedExpiryDate").value;
+
+            const fees =
+                document.getElementById("unreservedFees").value;
+
+            const paymentMode =
+                document.getElementById("unreservedPaymentMode").value;
+
+            const notes =
+                document.getElementById("unreservedNotes").value;
+
+
+            let result;
+
+            try {
+
+                const response =
+                    await fetch("/api/unreserved", {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            name: name,
+                            mobile: mobile,
+                            section: section,
+                            joiningDate: joiningDate,
+                            expiryDate: expiryDate,
+                            fees: fees,
+                            paymentMode: paymentMode,
+                            notes: notes
+                        })
+
+                    });
+
+                result = await response.json();
+
+                if (!response.ok || !result.success) {
+
+                    alert(result.message || "Could not add student.");
+                    return;
+
+                }
+
+            } catch (error) {
+
+                console.error("Could not add unreserved student:", error);
+
+                alert("Could not reach the server. Please check your connection and try again.");
+                return;
+
+            }
+
+
+            await loadUnreservedStudents();
+
+            document
+                .getElementById("unreservedForm")
+                .reset();
+
+            closeUnreservedModal();
+
+            alert("Student added successfully!");
+
+        }
+
+
+        /* ================================================
+           UNRESERVED STUDENTS: REMOVE
+        ================================================= */
+
+        async function removeUnreservedStudent(id) {
+
+            const confirmRemove =
+                confirm("Are you sure you want to remove this student?");
+
+            if (!confirmRemove) {
+                return;
+            }
+
+            try {
+
+                const response =
+                    await fetch(`/api/unreserved/${id}`, {
+                        method: "DELETE"
+                    });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+
+                    alert(result.message || "Could not remove student.");
+                    return;
+
+                }
+
+            } catch (error) {
+
+                console.error("Could not remove unreserved student:", error);
+
+                alert("Could not reach the server. Please try again.");
+                return;
+
+            }
+
+
+            await loadUnreservedStudents();
 
         }
 
