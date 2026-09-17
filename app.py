@@ -863,6 +863,74 @@ def create_backup_snapshot(conn, action, triggered_by):
         print("Error creating backup snapshot:", e)
 
 
+def create_unreserved_backup_snapshot(conn, action, triggered_by):
+
+    try:
+
+        today = datetime.now().strftime("%Y-%m-%d")
+
+        students = conn.execute("""
+            SELECT *
+            FROM unreserved_students
+            ORDER BY id DESC
+        """).fetchall()
+
+        snapshot = []
+
+        for student in students:
+
+            status = (
+                "expired"
+                if student["expiry_date"] < today
+                else "active"
+            )
+
+            snapshot.append({
+                "name": student["name"],
+                "mobile": student["mobile"],
+                "section": student["section"],
+                "setNumber": None,
+                "joiningDate": student["joining_date"],
+                "expiryDate": student["expiry_date"],
+                "fees": student["fees"],
+                "paymentMode": student["payment_mode"],
+                "notes": student["notes"] or "",
+                "status": status
+            })
+
+        created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        conn.execute("""
+            INSERT INTO backups (
+                action, triggered_by, student_count, snapshot_data, created_at
+            )
+            VALUES (?, ?, ?, ?, ?)
+        """, (
+            action,
+            triggered_by,
+            len(snapshot),
+            json.dumps(snapshot),
+            created_at
+        ))
+
+
+        cutoff_date = (
+            datetime.now() - timedelta(days=90)
+        ).strftime("%Y-%m-%d %H:%M:%S")
+
+        conn.execute("""
+            DELETE FROM backups
+            WHERE created_at < ?
+        """, (cutoff_date,))
+
+
+        conn.commit()
+
+    except Exception as e:
+
+        print("Error creating unreserved backup snapshot:", e)
+
+
 # =====================================================
 # ADD NEW STUDENT
 # =====================================================
@@ -2310,6 +2378,8 @@ def add_unreserved_student():
 
         student_id = cursor.lastrowid
 
+        create_unreserved_backup_snapshot(conn, "unreserved_add", name)
+
         return jsonify({
             "success": True,
             "message": "Student added successfully.",
@@ -2339,7 +2409,7 @@ def delete_unreserved_student(student_id):
     try:
 
         student = conn.execute("""
-            SELECT id FROM unreserved_students WHERE id = ?
+            SELECT id, name FROM unreserved_students WHERE id = ?
         """, (student_id,)).fetchone()
 
         if not student:
@@ -2354,6 +2424,8 @@ def delete_unreserved_student(student_id):
         """, (student_id,))
 
         conn.commit()
+
+        create_unreserved_backup_snapshot(conn, "unreserved_remove", student["name"])
 
         return jsonify({
             "success": True,

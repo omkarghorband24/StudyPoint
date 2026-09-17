@@ -2091,13 +2091,18 @@
 
         function backupRowHTML(backup) {
 
+            const actionLabelMap = {
+                add: "Student Added",
+                remove: "Student Removed",
+                unreserved_add: "Unreserved Added",
+                unreserved_remove: "Unreserved Removed"
+            };
+
             const actionLabel =
-                backup.action === "add"
-                    ? "Student Added"
-                    : "Student Removed";
+                actionLabelMap[backup.action] || backup.action;
 
             const actionClass =
-                backup.action === "add"
+                backup.action === "add" || backup.action === "unreserved_add"
                     ? "active-badge"
                     : "expired-badge";
 
